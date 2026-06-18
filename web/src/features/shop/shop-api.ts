@@ -1,0 +1,27 @@
+import { api, newIdempotencyKey } from '@/lib/api-client';
+import type {
+  CreateAddressBody,
+  DailyRewardConfig,
+  GiftWalletItem,
+  PointEvent,
+  RedeemResult,
+  ShippingAddress,
+  ShopDeal,
+} from '@/types/api';
+
+export const shopApi = {
+  deals: () => api.get<ShopDeal[]>('/shop/deals'),
+  redeem: (dealId: string) =>
+    api.post<RedeemResult>(`/shop/deals/${dealId}/redeem`, undefined, {
+      idempotencyKey: newIdempotencyKey(),
+    }),
+  dailyRewardConfig: () => api.get<DailyRewardConfig[]>('/shop/daily-reward'),
+  claimDaily: () => api.post<{ greenAwarded: number }>('/shop/daily-reward/claim'),
+  gifts: () => api.get<GiftWalletItem[]>('/shop/gifts'),
+  useGift: (id: string) => api.post<GiftWalletItem>(`/shop/gifts/${id}/use`),
+  confirmGift: (id: string, shippingAddressId: string) =>
+    api.post<GiftWalletItem>(`/shop/gifts/${id}/confirm`, { shippingAddressId }),
+  addresses: () => api.get<ShippingAddress[]>('/shop/addresses'),
+  createAddress: (body: CreateAddressBody) => api.post<ShippingAddress>('/shop/addresses', body),
+  activeEvents: () => api.get<PointEvent[]>('/events/active'),
+};

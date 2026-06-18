@@ -1,0 +1,228 @@
+/* Flat Neubrutalism — web.CLAUDE.md §9. Hard shadow 4px no-blur, viền đen 2–3px. */
+:root {
+  --c-yellow: #ffd60a;
+  --c-blue: #3b82f6;
+  --c-green: #22c55e;
+  --c-pink: #fb7185;
+  --c-cream: #faf7f0;
+  --c-ink: #111111;
+  --c-white: #ffffff;
+  --c-muted: #6b7280;
+  --border: 3px solid var(--c-ink);
+  --border-thin: 2px solid var(--c-ink);
+  --shadow: 4px 4px 0 0 var(--c-ink);
+  --shadow-sm: 2px 2px 0 0 var(--c-ink);
+  --radius: 10px;
+  --font-head: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  background: var(--c-cream);
+  color: var(--c-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-head);
+  margin: 0 0 0.4em;
+}
+.mono {
+  font-family: var(--font-mono);
+}
+a {
+  color: var(--c-blue);
+}
+
+/* Card */
+.neu-card {
+  background: var(--c-white);
+  border: var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+.neu-card--flat {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Button — press làm khối "lún" theo offset shadow */
+.neu-btn {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 15px;
+  border: var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  background: var(--c-yellow);
+  color: var(--c-ink);
+  padding: 10px 16px;
+  cursor: pointer;
+  transition:
+    transform 0.05s ease,
+    box-shadow 0.05s ease;
+}
+.neu-btn:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 0 var(--c-ink);
+}
+.neu-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 0 var(--c-ink);
+}
+.neu-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow);
+}
+.neu-btn--blue {
+  background: var(--c-blue);
+  color: var(--c-white);
+}
+.neu-btn--green {
+  background: var(--c-green);
+  color: var(--c-white);
+}
+.neu-btn--pink {
+  background: var(--c-pink);
+  color: var(--c-white);
+}
+.neu-btn--ghost {
+  background: var(--c-white);
+}
+.neu-btn--sm {
+  font-size: 13px;
+  padding: 6px 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Inputs */
+.neu-input,
+.neu-select,
+.neu-textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 15px;
+  border: var(--border-thin);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  background: var(--c-white);
+  color: var(--c-ink);
+}
+.neu-input:focus,
+.neu-select:focus,
+.neu-textarea:focus {
+  outline: none;
+  box-shadow: var(--shadow-sm);
+}
+.neu-label {
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.neu-field {
+  margin-bottom: 12px;
+}
+
+/* Badge / Pill */
+.neu-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: var(--border-thin);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--c-white);
+}
+
+/* Dialog */
+.neu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+.neu-dialog {
+  background: var(--c-white);
+  border: var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 440px;
+  padding: 20px;
+}
+
+/* Toast */
+.neu-toasts {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+  width: min(420px, 92vw);
+}
+.neu-toast {
+  border: var(--border-thin);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 14px;
+  background: var(--c-white);
+}
+.neu-toast--error {
+  background: var(--c-pink);
+  color: var(--c-white);
+}
+.neu-toast--success {
+  background: var(--c-green);
+  color: var(--c-white);
+}
+
+/* Layout helpers */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.muted {
+  color: var(--c-muted);
+}
+.spread {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.grid {
+  display: grid;
+  gap: 12px;
+}
