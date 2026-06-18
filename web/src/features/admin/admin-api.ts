@@ -1,5 +1,5 @@
 import { api } from '@/lib/api-client';
-import type { Campaign, CreateCampaignBody, Idol } from '@/types/api';
+import type { Campaign, CreateCampaignBody, Idol, IdolStatus, Paginated } from '@/types/api';
 
 export interface ResolutionResult {
   outcome: 'A' | 'B';
@@ -11,6 +11,8 @@ export interface ResolutionResult {
 }
 
 export const adminApi = {
+  listIdols: (status: IdolStatus = 'PENDING', cursor?: string) =>
+    api.get<Paginated<Idol>>('/admin/idols', { params: { status, cursor } }),
   approveIdol: (id: string) => api.post<Idol>(`/admin/idols/${id}/approve`),
   rejectIdol: (id: string) => api.post<Idol>(`/admin/idols/${id}/reject`),
   createCampaign: (body: CreateCampaignBody) => api.post<Campaign>('/admin/campaigns', body),

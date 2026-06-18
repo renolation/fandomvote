@@ -1,6 +1,14 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Campaign, CreateCampaignBody } from '@/types/api';
 import { adminApi, type ResolutionResult } from './admin-api';
+
+export function usePendingIdols() {
+  return useQuery({
+    queryKey: ['admin-pending-idols'],
+    queryFn: () => adminApi.listIdols('PENDING'),
+    refetchInterval: 30_000,
+  });
+}
 
 type CampaignActionResult =
   | Campaign
@@ -9,9 +17,11 @@ type CampaignActionResult =
   | { refundedUsers: number };
 
 export function useApproveIdol() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (v: { id: string; approve: boolean }) =>
       v.approve ? adminApi.approveIdol(v.id) : adminApi.rejectIdol(v.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-pending-idols'] }),
   });
 }
 

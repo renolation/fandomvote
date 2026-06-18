@@ -12,8 +12,12 @@ import { ShopPage } from '@/routes/(user)/shop-page';
 import { ProfilePage } from '@/routes/(user)/profile-page';
 import { NotificationsPage } from '@/routes/(user)/notifications-page';
 import { AdminDashboardPage } from '@/routes/(admin)/dashboard-page';
-import { AdminIdolsPage } from '@/routes/(admin)/idols-page';
+import { AdminReviewPage } from '@/routes/(admin)/review-page';
+import { AdminCampaignsPage } from '@/routes/(admin)/campaigns-page';
 import { AdminCampaignCreatePage } from '@/routes/(admin)/campaign-create-page';
+import { AdminShopPage } from '@/routes/(admin)/shop-page';
+import { AdminEventsPage } from '@/routes/(admin)/events-page';
+import { AdminStubPage } from '@/routes/(admin)/stub-page';
 
 export function App() {
   const qc = useQueryClient();
@@ -45,8 +49,14 @@ export function App() {
       <Route element={<RequireAdmin />}>
         <Route path="admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboardPage />} />
-          <Route path="idols" element={<AdminIdolsPage />} />
+          <Route path="review" element={<AdminReviewPage />} />
+          <Route path="campaigns" element={<AdminCampaignsPage />} />
           <Route path="campaigns/new" element={<AdminCampaignCreatePage />} />
+          <Route path="shop" element={<AdminShopPage />} />
+          <Route path="events" element={<AdminEventsPage />} />
+          <Route path="orders" element={<AdminStubPage title="Đơn hàng (Physical)" />} />
+          <Route path="reconcile" element={<AdminStubPage title="Đối soát" />} />
+          <Route path="users" element={<AdminStubPage title="Người dùng" />} />
         </Route>
       </Route>
 

@@ -76,6 +76,24 @@ export class IdolService {
     return { items, nextCursor: hasMore ? items[items.length - 1].id : null };
   }
 
+  // Admin: liệt kê idol theo trạng thái (mặc định PENDING) để duyệt.
+  async listByStatus(
+    status: 'PENDING' | 'APPROVED' | 'REJECTED',
+    q: PaginationQueryDto,
+  ): Promise<PaginatedResult<Idol>> {
+    const conds = [eq(idols.status, status)];
+    if (q.cursor) conds.push(lt(idols.id, q.cursor));
+    const rows = await this.db
+      .select()
+      .from(idols)
+      .where(and(...conds))
+      .orderBy(desc(idols.id))
+      .limit(q.limit + 1);
+    const hasMore = rows.length > q.limit;
+    const items = hasMore ? rows.slice(0, q.limit) : rows;
+    return { items, nextCursor: hasMore ? items[items.length - 1].id : null };
+  }
+
   async getById(id: string): Promise<Idol> {
     const rows = await this.db.select().from(idols).where(eq(idols.id, id)).limit(1);
     if (rows.length === 0) throw new BusinessException('NOT_FOUND', 'Idol không tồn tại');

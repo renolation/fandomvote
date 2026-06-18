@@ -1,7 +1,8 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthUser, CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { CampaignService } from '../campaign/campaign.service';
 import { ResolutionService } from '../campaign/resolution.service';
 import { CreateCampaignDto } from '../campaign/dto/create-campaign.dto';
@@ -20,6 +21,15 @@ export class AdminController {
     private readonly resolution: ResolutionService,
     private readonly vote: VoteService,
   ) {}
+
+  @Get('idols')
+  @ApiOperation({ summary: 'Liệt kê idol theo trạng thái (mặc định PENDING)' })
+  listIdols(
+    @Query('status') status: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING',
+    @Query() q: PaginationQueryDto,
+  ) {
+    return this.idol.listByStatus(status, q);
+  }
 
   @Post('idols/:id/approve')
   @ApiOperation({ summary: 'Duyệt idol' })
