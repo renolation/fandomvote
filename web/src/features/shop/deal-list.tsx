@@ -1,13 +1,16 @@
-import { NeuButton, NeuCard, NeuPill } from '@/components/neu';
+import { NeuButton, NeuPill } from '@/components/neu';
 import { EmptyState, ErrorState, Loading } from '@/components/state-views';
 import { useToast } from '@/components/toast';
+import { colorForId } from '@/lib/avatar';
 import { formatNumber } from '@/lib/format';
+import { useAuthGate } from '@/features/auth/use-auth-gate';
 import { useDeals, useRedeemDeal } from './use-shop';
 
 export function DealList() {
   const { data, isLoading, error, refetch } = useDeals();
   const redeem = useRedeemDeal();
   const toast = useToast();
+  const gate = useAuthGate();
 
   if (isLoading) return <Loading />;
   if (error) return <ErrorState error={error} onRetry={() => refetch()} />;
@@ -23,33 +26,32 @@ export function DealList() {
   };
 
   return (
-    <div className="col">
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
       {data.map((d) => {
         const left = d.stock - d.stockSold;
         const out = left <= 0;
+        const c = colorForId(d.id);
         return (
-          <NeuCard key={d.id} flat>
-            <div className="spread">
-              <div>
-                <strong>{d.title}</strong>
-                <div className="mono" style={{ fontSize: 13 }}>
-                  {formatNumber(d.cost)} {d.currency}
-                </div>
-                <NeuPill>{d.itemType}</NeuPill>{' '}
-                <span className="muted" style={{ fontSize: 12 }}>
-                  còn {formatNumber(Math.max(0, left))}
-                </span>
+          <div key={d.id} style={{ background: 'var(--c-white)', border: '3px solid var(--c-ink)', borderRadius: 14, boxShadow: '4px 4px 0 var(--c-ink)', overflow: 'hidden' }}>
+            <div style={{ height: 120, borderBottom: '3px solid var(--c-ink)', background: `repeating-linear-gradient(45deg, ${c}, ${c} 8px, #0a0a0a 8px, #0a0a0a 12px)` }} />
+            <div style={{ padding: 15 }}>
+              <div className="spread" style={{ alignItems: 'flex-start', gap: 8 }}>
+                <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>{d.title}</div>
+                <NeuPill color={d.itemType === 'DIGITAL' ? '#3B82F6' : '#FB7185'}>{d.itemType}</NeuPill>
               </div>
-              <NeuButton
-                size="sm"
-                variant="pink"
-                disabled={out || redeem.isPending}
-                onClick={() => onRedeem(d.id)}
-              >
-                {out ? 'Hết' : 'Đổi'}
-              </NeuButton>
+              <div className="spread" style={{ marginTop: 14 }}>
+                <div>
+                  <div className="mono" style={{ fontWeight: 700, fontSize: 16 }}>
+                    {formatNumber(d.cost)} {d.currency === 'GOLD' ? '🟡' : '💎'}
+                  </div>
+                  <div className="mono" style={{ fontSize: 11, color: '#999' }}>còn {formatNumber(Math.max(0, left))}</div>
+                </div>
+                <NeuButton size="sm" disabled={out || redeem.isPending} onClick={() => gate(() => onRedeem(d.id))}>
+                  {out ? 'Hết' : 'Đổi'}
+                </NeuButton>
+              </div>
             </div>
-          </NeuCard>
+          </div>
         );
       })}
     </div>

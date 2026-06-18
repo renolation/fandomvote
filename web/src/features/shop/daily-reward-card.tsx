@@ -1,10 +1,12 @@
 import { NeuButton, NeuCard } from '@/components/neu';
 import { useToast } from '@/components/toast';
+import { useAuthGate } from '@/features/auth/use-auth-gate';
 import { useClaimDaily } from './use-shop';
 
 export function DailyRewardCard() {
   const claim = useClaimDaily();
   const toast = useToast();
+  const gate = useAuthGate();
 
   const onClaim = async () => {
     try {
@@ -22,7 +24,7 @@ export function DailyRewardCard() {
           <strong>Điểm danh hằng ngày</strong>
           <div style={{ fontSize: 12 }}>Nhận Green mỗi ngày (1 lần/ngày)</div>
         </div>
-        <NeuButton variant="ghost" loading={claim.isPending} onClick={onClaim}>
+        <NeuButton variant="ghost" loading={claim.isPending} onClick={() => gate(onClaim)}>
           Nhận
         </NeuButton>
       </div>

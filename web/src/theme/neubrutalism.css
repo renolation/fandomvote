@@ -4,8 +4,9 @@
   --c-blue: #3b82f6;
   --c-green: #22c55e;
   --c-pink: #fb7185;
-  --c-cream: #faf7f0;
-  --c-ink: #111111;
+  --c-cream: #ede6d6; /* nền trang (FandomVote Web design) */
+  --c-navbg: #faf7f0; /* nền header/card sáng */
+  --c-ink: #0a0a0a;
   --c-white: #ffffff;
   --c-muted: #6b7280;
   --border: 3px solid var(--c-ink);
@@ -225,4 +226,31 @@ a {
 .grid {
   display: grid;
   gap: 12px;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.wallet-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 2px solid var(--c-ink);
+  border-radius: 20px;
+  padding: 5px 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 12px;
+}
+.bar-track {
+  height: 12px;
+  background: #f0ebdf;
+  border: 2px solid var(--c-ink);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-right: 2px solid var(--c-ink);
 }

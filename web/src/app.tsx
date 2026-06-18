@@ -29,21 +29,24 @@ export function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
-      <Route element={<RequireAuth />}>
-        <Route element={<AppLayout />}>
-          <Route index element={<VotePage />} />
-          <Route path="campaigns/:id" element={<CampaignDetailPage />} />
-          <Route path="shop" element={<ShopPage />} />
+      {/* User shell — xem tự do (chưa auth vẫn vào được home/campaign/shop) */}
+      <Route element={<AppLayout />}>
+        <Route index element={<VotePage />} />
+        <Route path="campaigns/:id" element={<CampaignDetailPage />} />
+        <Route path="shop" element={<ShopPage />} />
+        {/* Cần auth: hồ sơ cá nhân + thông báo */}
+        <Route element={<RequireAuth />}>
           <Route path="profile" element={<ProfilePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
+      </Route>
 
-        <Route element={<RequireAdmin />}>
-          <Route path="admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
-            <Route path="idols" element={<AdminIdolsPage />} />
-            <Route path="campaigns/new" element={<AdminCampaignCreatePage />} />
-          </Route>
+      {/* Admin — cần auth + role ADMIN */}
+      <Route element={<RequireAdmin />}>
+        <Route path="admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="idols" element={<AdminIdolsPage />} />
+          <Route path="campaigns/new" element={<AdminCampaignCreatePage />} />
         </Route>
       </Route>
 

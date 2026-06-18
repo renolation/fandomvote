@@ -1,8 +1,16 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/features/auth/auth-context';
 import { walletApi } from './wallet-api';
 
+// Chỉ fetch khi đã auth (guest xem campaign không gọi ví).
 export function useBalance() {
-  return useQuery({ queryKey: ['balance'], queryFn: walletApi.balance, refetchInterval: 10_000 });
+  const { isAuthed } = useAuth();
+  return useQuery({
+    queryKey: ['balance'],
+    queryFn: walletApi.balance,
+    enabled: isAuthed,
+    refetchInterval: isAuthed ? 10_000 : false,
+  });
 }
 
 export function useLedger() {
