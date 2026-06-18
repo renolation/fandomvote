@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fdv-postgres
+    environment:
+      POSTGRES_USER: fdv
+      POSTGRES_PASSWORD: fdv
+      POSTGRES_DB: fdv
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - '5432:5432'
+    volumes:
+      - fdv-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U fdv']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  fdv-pgdata:
