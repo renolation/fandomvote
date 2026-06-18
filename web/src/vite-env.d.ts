@@ -8,3 +8,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// Runtime config inject bởi /config.js (container web sinh từ env API_BASE_URL).
+interface Window {
+  __FDV_CONFIG__?: { apiBaseUrl?: string };
+}

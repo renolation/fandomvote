@@ -22,7 +22,11 @@ export interface RequestOptions {
   params?: Record<string, unknown>;
 }
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+// Ưu tiên runtime config (window.__FDV_CONFIG__ từ /config.js do container inject) →
+// build-time env → mặc định '/api/v1' (proxy nginx). Cho phép 1 image web trỏ backend bất kỳ nơi.
+const runtimeBase =
+  typeof window !== 'undefined' ? window.__FDV_CONFIG__?.apiBaseUrl : undefined;
+const baseURL = runtimeBase || import.meta.env.VITE_API_BASE_URL || '/api/v1';
 const raw = axios.create({ baseURL });
 
 // Refresh single-flight: nhiều request 401 cùng lúc → chỉ refresh 1 lần.
