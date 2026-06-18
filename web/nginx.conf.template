@@ -8,9 +8,13 @@ server {
   gzip_types text/css application/javascript application/json image/svg+xml;
   gzip_min_length 1024;
 
-  # API → backend (BACKEND_ORIGIN do env quyết định; giữ nguyên prefix /api/v1)
+  # API → backend (BACKEND_ORIGIN do env quyết định; giữ nguyên prefix /api/v1).
+  # Lazy-resolve qua biến + resolver Docker (127.0.0.11) → nginx KHÔNG crash nếu backend
+  # chưa lên / khác network; chỉ 502 lúc request. proxy_pass biến cần nối $request_uri thủ công.
   location /api/ {
-    proxy_pass ${BACKEND_ORIGIN};
+    resolver 127.0.0.11 ipv6=off valid=10s;
+    set $fdv_upstream ${BACKEND_ORIGIN};
+    proxy_pass $fdv_upstream$request_uri;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
