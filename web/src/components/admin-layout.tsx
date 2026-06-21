@@ -5,8 +5,10 @@ import { usePendingIdols } from '@/features/admin/use-admin';
 
 const NAV = [
   { to: '/admin', label: 'Dashboard', icon: '📊', end: true },
+  { to: '/admin/analytics', label: 'Analytics', icon: '📈', end: false },
   { to: '/admin/review', label: 'Duyệt đề cử', icon: '✅', end: false, badge: true },
   { to: '/admin/campaigns', label: 'Campaign', icon: '🗳️', end: false },
+  { to: '/admin/leaderboards', label: 'Thưởng BXH', icon: '🏅', end: false },
   { to: '/admin/shop', label: 'Shop & Deals', icon: '🛒', end: false },
   { to: '/admin/events', label: 'Point Events', icon: '⚡', end: false },
   { to: '/admin/orders', label: 'Đơn hàng', icon: '📦', end: false },
@@ -16,9 +18,11 @@ const NAV = [
 
 const TITLES: Record<string, string> = {
   '/admin': 'Dashboard',
+  '/admin/analytics': 'Analytics — Sức khoẻ tiền tệ',
   '/admin/review': 'Duyệt đề cử idol',
   '/admin/campaigns': 'Quản lý Campaign',
   '/admin/campaigns/new': 'Tạo Campaign',
+  '/admin/leaderboards': 'Thưởng Bảng xếp hạng',
   '/admin/shop': 'Shop & Deals',
   '/admin/events': 'Point Events',
   '/admin/orders': 'Đơn hàng (Physical)',

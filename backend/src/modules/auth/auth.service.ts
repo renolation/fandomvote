@@ -114,9 +114,8 @@ export class AuthService {
           .returning();
         const created = rows[0];
         if (dto.referralCode) {
+          // Chỉ tạo PENDING; thưởng release khi referee tự kiếm 500 Gold lũy kế (§9).
           await this.referral.createPendingReferral(tx, dto.referralCode, created.id, ip, dto.deviceFingerprint);
-          // Email Google đã verified → thưởng referral ngay.
-          if (p.emailVerified) await this.referral.rewardOnVerify(tx, created.id);
         }
         return created;
       });

@@ -6,6 +6,7 @@ import { useCampaigns } from '@/features/campaign/use-campaign';
 import { CampaignBoard } from '@/features/campaign/campaign-board';
 import { NominateDialog } from '@/features/idol/nominate-dialog';
 import { VoteSidebar } from '@/features/vote/vote-sidebar';
+import { UserLeaderboard } from '@/features/leaderboard/user-leaderboard';
 
 const chip = (active: boolean): React.CSSProperties => ({
   border: '2px solid var(--c-ink)',
@@ -53,7 +54,10 @@ export function VotePage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
         <CampaignBoard campaign={selected} />
-        <VoteSidebar />
+        <div className="col">
+          <VoteSidebar />
+          <UserLeaderboard />
+        </div>
       </div>
 
       <NominateDialog open={nominateOpen} onClose={() => setNominateOpen(false)} />

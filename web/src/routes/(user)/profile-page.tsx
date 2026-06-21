@@ -10,6 +10,7 @@ import { LedgerList } from '@/features/wallet/ledger-list';
 import { GiftWallet } from '@/features/shop/gift-wallet';
 import { ReferralCard } from '@/features/referral/referral-card';
 import { VoteActivityList } from '@/features/vote/vote-activity-list';
+import { MyRankCard } from '@/features/leaderboard/my-rank-card';
 
 type Tab = 'gifts' | 'referral' | 'activity' | 'ledger';
 const TABS: { key: Tab; label: string }[] = [
@@ -58,6 +59,8 @@ export function ProfilePage() {
           </div>
           <BalanceCards />
         </NeuCard>
+
+        <MyRankCard />
 
         <VerifyPanel />
       </div>

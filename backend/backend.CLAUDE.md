@@ -155,6 +155,8 @@ backend/src/
     ├── webhook/     # iap webhook (Diamond), offerwall postback (Gold) — verify trước khi cộng
     ├── resolution/  # Phase 4 — A/B/C, quỹ, donation receipts
     ├── notification/# in-app, badge, mark-read
+    ├── leaderboard/ # Top Voter / Top Earner (DAY/WEEK/MONTH), snapshot + admin duyệt thưởng
+    ├── analytics/   # daily_metrics/user_metrics nightly (tiền ở Postgres); hành vi → tool ngoài
     └── admin/       # controller gom riêng + RolesGuard('ADMIN')
 ```
 
@@ -166,10 +168,12 @@ Mỗi module: `*.module.ts`, `*.controller.ts` (HTTP + Swagger), `*.service.ts` 
 
 | | GREEN | GOLD | DIAMOND |
 |---|---|---|---|
-| Nguồn | checkin, event, referral | video, task, offerwall | nạp thật (IAP) |
+| Nguồn | checkin/daily reward, event | video, task, offerwall, **referral**, **leaderboard reward** | nạp thật (IAP) |
 | Hạn | 23:59:59 ngày đó (UTC+7) | không | không |
 | Trần | ≤100 **earned**/ngày | không | không |
 | Giá trị | 0đ | 1 Gold = 1đ | 1 Diamond = 1.000 Gold = 1.000đ |
+
+> ⚠️ **Thay đổi từ INSTRUCTION mới:** thưởng **referral = GOLD** (không phải Green) — xem §9. Code hiện tại đang là Green/verify-gate → cần refactor cho khớp.
 
 **Dòng chảy MỘT CHIỀU:** `TIỀN THẬT → DIAMOND → GOLD → VOTE`, `AD → GOLD → VOTE`, `CHECKIN/REFERRAL → GREEN → VOTE`.
 
@@ -229,12 +233,15 @@ Hai tầng: kho idol (`idols.name_normalized UNIQUE`, `aliases`) ↔ `campaign_i
 
 ---
 
-## 9. Referral (đề xuất mặc định đã CHỐT)
-- Mã mời = User ID. User mới điền khi đăng ký (optional, 1 lần, không sửa). Cả hai nhận **500 Green**.
-- Referrer nhận thưởng **chỉ khi** referee verify email/SĐT (`referrals.status: PENDING → REWARDED`) — chuyển trạng thái + reward **dưới `lockUser(tx, referrerId)`** (đếm REWARDED < 50 rồi mới reward, chống vượt trần khi nhiều referee verify đồng thời).
-- **500 Green referral = PA-B:** miễn trần 100/ngày (flag riêng, không cộng vào `green_earned_today`), `expires_at = now + 7 ngày` (config `referral.green_expiry_days = 7`).
-- **Giới hạn lượt mời được thưởng = 50/user** (config `referral.max_rewarded = 50`).
-- Chống self-referral: referrer ≠ referee; chặn cùng thiết bị/IP/SĐT đáng ngờ → `referrals.signup_ip`, `referrals.device_fingerprint` (thu lúc register), ngưỡng nghi ngờ trong `platform_config`.
+## 9. Referral (CHỐT theo INSTRUCTION mới — thưởng GOLD theo mốc lũy kế)
+- Mã mời = User ID (Profile + nút copy). User mới điền khi đăng ký (optional, **1 lần, không sửa**) → tạo `referrals` **PENDING** (CHƯA cộng gì).
+- **Trả thưởng có mốc:** khi referee **tự kiếm đạt 500 Gold lũy kế lần đầu** → **CẢ HAI nhận 500 Gold** → `referrals.status = REWARDED`. Ledger **2 dòng GOLD `source=REFERRAL`** (1 referrer + 1 referee), dưới `lockUser(tx, referrerId)` + idempotent (chỉ release 1 lần).
+- **"Đạt 500 Gold" = LŨY KẾ, KHÔNG phải số dư:** `SUM(amount) WHERE currency=GOLD AND amount>0 AND source IN (VIDEO,OFFERWALL,TASK)` ≥ 500 (kiếm rồi tiêu hết vẫn tính). Lưu mốc qua `referrals.referee_gold_earned`; kiểm sau mỗi lần referee được cộng Gold-earn, chạm 500 → release.
+- **KHÔNG giới hạn số lượt mời** được thưởng/user (điều kiện "500 Gold thật" đã đủ chống farm bot).
+- Rule hiển thị bắt buộc ở ô/popup nhập mã: *"Cả bạn và người mời nhận 500 Gold khi bạn tích lũy đủ 500 Gold đầu tiên (video/nhiệm vụ/offerwall). Có thể bỏ qua."*
+- Chống self-referral: referrer ≠ referee; chặn cùng thiết bị/IP/SĐT đáng ngờ → `referrals.signup_ip`, `referrals.device_fingerprint` (thu lúc register), ngưỡng trong `platform_config`.
+
+> ⚠️ Code hiện tại đang implement bản cũ (500 **Green**, release khi **verify email/SĐT**, trần 50). Cần refactor sang bản trên: Gold + mốc 500 Gold lũy kế + bỏ trần.
 
 ---
 
@@ -263,27 +270,29 @@ Bảng `idempotency_keys(key PK, user_id, scope, response_json, status, created_
 ## 12. Schema — bảng & invariant
 
 Bảng: `users, refresh_tokens, wallet_ledger, green_daily_counter, idempotency_keys, idols, campaigns, campaign_idols, vote_logs, partners, shop_deals, gift_wallet_items, iap_packages, daily_rewards_config, point_events, referrals, notifications, donation_receipts, platform_config`.
-**Bảng bổ sung:** `verification_tokens, admin_audit_log, shipping_addresses, campaign_snapshots`.
-- `donation_receipts`, `admin_audit_log`, `campaign_snapshots` **immutable** — chỉ INSERT.
+**Bảng bổ sung:** `verification_tokens, admin_audit_log, shipping_addresses, campaign_snapshots, leaderboard_snapshots, analytics_events, daily_metrics, user_metrics, cohort_retention`.
+- `donation_receipts` **PER-USER + immutable**: mỗi voter Gold 1 dòng `(campaign_id, user_id, gold_voted, donated_vnd, created_at)`, unique `(campaign_id, user_id)`. (Code hiện per-campaign → đổi sang per-user theo INSTRUCTION.) `admin_audit_log`, `campaign_snapshots`, `leaderboard_snapshots` cũng immutable.
 - Tiền tệ cột `bigint`. `expires_at` chỉ có ý nghĩa với GREEN trong `wallet_ledger`.
 
 **Cột/enum bổ sung:**
 - `wallet_ledger.consumes_ledger_id bigint NULL` (FIFO lot Green, §4).
 - `users`: `auth_provider`, `google_sub UNIQUE NULL`, `password_hash NULL`, `email_verified_at`, `phone_verified_at`, `signup_ip`, `device_fingerprint`.
-- `refresh_tokens.family_id uuid`; `referrals.signup_ip inet`, `device_fingerprint text`.
+- `refresh_tokens.family_id uuid`; `referrals`: `signup_ip`, `device_fingerprint`, **`referee_gold_earned bigint`** (mốc 500 Gold lũy kế); **KHÔNG còn trần lượt mời**.
 - `green_daily_counter`: PK `(user_id, date)` + `checkin_claimed_at` (check-in 1 lần/ngày).
-- `campaigns`: `closed_at`, `snapshotted_at`; `vote_logs.id bigserial` (tiebreak).
-- `gift_wallet_items.shipping_address_id NULL` (chỉ PHYSICAL khi CONFIRMED — PII).
-- enum `source` thêm: `VOTE_REVERSAL`, `OFFERWALL_CHARGEBACK`.
+- `campaigns`: `closed_at`, `snapshotted_at`, `reward_config jsonb`; `vote_logs.id bigserial` (tiebreak); `idols.bio`.
+- `gift_wallet_items.shipping_address_id NULL` (PHYSICAL khi CONFIRMED — PII).
+- `iap_packages.bonus_diamond`; `point_events`: `target_currency`, `applies_to_sources[]`, `banner_text/banner_image`, `priority`.
+- `leaderboard_snapshots(board_type[TOP_VOTER/TOP_EARNER], period[DAY/WEEK/MONTH], period_start/end, user_id, rank, score, reward_status[PENDING/APPROVED/SENT], reward_config)` — §17.
+- enum `source` thêm: `VOTE_REVERSAL`, `OFFERWALL_CHARGEBACK`, **`REWARD`** (thưởng leaderboard).
 
 **Invariants — phải có test (`test/invariants/`) + job reconcile chạy prod (daily, alert khi lệch):**
 1. Balance mỗi loại không âm (Gold âm CHỈ qua `OFFERWALL_CHARGEBACK` → account flagged).
-2. `green_earned_today ≤ 100` (trừ flag event/referral/refund miễn trần).
-3. Σ Gold phát hành ≈ doanh thu ad (đối soát).
+2. `green_earned_today ≤ 100` (trừ flag event/refund miễn trần — referral nay là Gold, không đụng Green).
+3. Σ Gold phát hành ≈ doanh thu ad đối soát (Gold referral/reward là chi phí, đối soát riêng).
 4. Σ Diamond × 1.000 = Σ tiền nạp xác nhận webhook.
-5. Quỹ campaign = `floor(Σ vote_logs GOLD × donation_ratio)`.
+5. Quỹ campaign = `floor(Σ vote_logs GOLD × donation_ratio)` = Σ `donation_receipts.donated_vnd` của campaign.
 6. `stock_sold ≤ stock`.
-7. Mỗi referee đúng 1 bản ghi `referrals`; referrer = referee bị chặn.
+7. Mỗi referee đúng 1 `referrals`; referrer ≠ referee; release đúng **1 lần** khi referee lũy kế ≥ 500 Gold (cả hai +500 Gold).
 
 ---
 
@@ -317,8 +326,8 @@ Bảng: `users, refresh_tokens, wallet_ledger, green_daily_counter, idempotency_
 - **0 Foundation:** NestJS + Drizzle + Postgres, JWT + guard, schema + migration, ledger core (`LedgerService`/`GreenCounterService` + `tx`), OpenAPI, idempotency table.
 - **1 Vote:** leaderboard, vote atomic, multi-campaign, đề cử idol + check trùng, thể lệ, referral, admin tối thiểu (duyệt idol / tạo campaign / chạy resolution).
 - **2 Shop:** daily reward → IAP → special deals + ví quà (offerwall mock), point event banner.
-- **3 Profile:** ledger API, ví quà, mã mời, đề cử của tôi, hoạt động vote, notification, information, settings.
-- **4 Nâng cao:** resolution A/B/C, Vote LED, quỹ + biên lai, admin đầy đủ, offerwall thật, đối soát.
+- **3 Profile:** ledger API, ví quà, mã mời, đề cử của tôi, hoạt động vote, **xếp hạng của tôi**, notification, information, settings.
+- **4 Nâng cao:** resolution A/B/C, Vote LED, quỹ + biên lai (per-user), admin đầy đủ, offerwall thật, **user leaderboard + duyệt trao thưởng** (§17), **analytics dashboard** (§18, daily_metrics + currency health), đối soát.
 - **Native:** push (FCM/APNs) — schema/API không đổi.
 
 ---
@@ -328,5 +337,23 @@ Bảng: `users, refresh_tokens, wallet_ledger, green_daily_counter, idempotency_
 - **Idempotency TTL (daily):** xoá key hết hạn (vote/redeem ~24–48h, webhook ~90d).
 - **green_daily_counter prune (daily):** xoá row > 2 ngày.
 - **Reconciliation (daily):** chạy invariant §12 (3,4,5 + balance) trên prod → alert khi lệch.
+- **Leaderboard snapshot (cuối mỗi kỳ DAY/WEEK/MONTH, UTC+7):** snapshot top N Top Voter/Top Earner → `leaderboard_snapshots` (reward_status=PENDING chờ admin duyệt). Đọc leaderboard = query theo khoảng thời gian, KHÔNG xoá data (§17).
+- **Analytics nightly:** ledger/vote_logs → `daily_metrics` + `user_metrics` (gồm `lifetime_gold_earned` dùng chung điều kiện referral) + `cohort_retention` (§18).
 
-> KHÔNG cron cho Green expiration (lazy qua `expires_at` trong query). Cron CHỈ cho lifecycle + dọn dẹp + đối soát.
+> KHÔNG cron cho Green expiration (lazy qua `expires_at` trong query). Cron CHỈ cho lifecycle + dọn dẹp + đối soát + snapshot leaderboard + analytics nightly.
+
+---
+
+## 17. User Leaderboards (Top Voter / Top Earner) — INSTRUCTION §6
+- Khác leaderboard idol. Hiển thị 1 hàng DƯỚI bảng vote idol (carousel chuyển bảng) ở tab Vote.
+- **Top Voter** = Σ `vote_logs.amount` (GREEN+GOLD) theo user trong kỳ.
+- **Top Earner** = Σ `wallet_ledger.amount WHERE currency=GOLD AND amount>0 AND source IN (VIDEO,OFFERWALL,TASK)` — KHÔNG tính Gold nạp/đổi Diamond/referral/reward.
+- 3 khung **DAY / WEEK / MONTH (UTC+7)**. Reset theo kỳ = query theo khoảng (không xoá data); job snapshot ghi `leaderboard_snapshots` để đọc nhanh.
+- **Trao thưởng KHÔNG tự động:** hết kỳ → snapshot top N → **admin duyệt** (`reward_status PENDING→APPROVED→SENT`, chống bot cày Top Earner) → trao: ledger `source=REWARD` + notification winner ("cung cấp thông tin nhận quà qua email"). Phần thưởng cấu hình theo kỳ/hạng (`reward_config`).
+
+---
+
+## 18. Analytics (admin nội bộ) — INSTRUCTION §15
+- **Hybrid:** hành vi (DAU/WAU/MAU, retention D1/D7/D30, funnel) → **tool ngoài** (PostHog/Mixpanel) qua SDK ở web/mobile. **Tiền** (revenue, LTV, ARPPU, Gold liability, sink/source, quỹ) → **CHỈ Postgres**, KHÔNG đẩy ra ngoài (nhạy cảm + chính xác kế toán).
+- **Job nightly** đọc ledger → `daily_metrics` (revenue_vnd, gold_issued/spent/liability, green_earned/spent/expired, vote_green/gold, event_bonus_cost…) + `user_metrics` (lifetime_gold_earned, ltv_vnd, is_paying) + `cohort_retention`. KHÔNG query analytics nặng trực tiếp trên ledger/vote_logs lúc serving.
+- **Currency Health (đặc thù FDV):** `Gold liability = Σ Gold lưu hành × 1đ`; `sink/source = Σ|tiêu|/Σ phát` (>1 healthy, <1 lạm phát → cảnh báo). Admin dashboard cảnh báo khi sink/source < 1 hoặc Gold liability tăng bất thường.

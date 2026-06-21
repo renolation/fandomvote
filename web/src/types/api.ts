@@ -159,21 +159,23 @@ export interface CampaignSnapshotRow {
   snapshottedAt: string;
 }
 
+// Biên lai PER-USER (mỗi voter Gold 1 dòng) — §6.
 export interface DonationReceipt {
   id: string;
   campaignId: string;
-  fundVnd: number;
-  goldTotal: number;
+  userId: string;
+  goldVoted: number;
+  donatedVnd: number;
   donationRatioBps: number;
   receiptNo: string;
-  details: Record<string, unknown> | null;
   createdAt: string;
 }
 
 export interface CampaignResult {
   campaign: Campaign;
   snapshot: CampaignSnapshotRow[];
-  receipt: DonationReceipt | null;
+  fundVnd: number; // tổng quỹ = Σ donatedVnd per-user
+  receiptsCount: number;
 }
 
 export interface CampaignIdol {
@@ -292,6 +294,69 @@ export interface AppNotification {
   data: Record<string, unknown> | null;
   readAt: string | null;
   createdAt: string;
+}
+
+// ---- User leaderboards (§17) ----
+export type LeaderboardType = 'TOP_VOTER' | 'TOP_EARNER';
+export type LeaderboardPeriod = 'DAY' | 'WEEK' | 'MONTH';
+export interface BoardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  score: number;
+}
+export interface MyRank {
+  type: LeaderboardType;
+  period: LeaderboardPeriod;
+  rank: number | null;
+  score: number;
+}
+export interface LeaderboardSnapshot {
+  id: number;
+  boardType: LeaderboardType;
+  period: LeaderboardPeriod;
+  periodStart: string;
+  periodEnd: string;
+  userId: string;
+  rank: number;
+  score: number;
+  rewardStatus: 'PENDING' | 'APPROVED' | 'SENT';
+  rewardConfig: Record<string, unknown> | null;
+  grantedAt: string | null;
+  createdAt: string;
+}
+
+// ---- Analytics (§18) ----
+export interface DailyMetric {
+  metricDate: string;
+  dau: number;
+  wau: number;
+  mau: number;
+  newUsers: number;
+  revenueVnd: number;
+  adRevenueGold: number;
+  topupDiamond: number;
+  goldIssued: number;
+  goldSpent: number;
+  goldLiability: number;
+  greenEarned: number;
+  greenSpent: number;
+  greenExpired: number;
+  totalVotes: number;
+  voteGreen: number;
+  voteGold: number;
+  eventBonusCost: number;
+  computedAt: string;
+}
+export interface AnalyticsOverview {
+  currencyHealth: {
+    goldLiability: number;
+    goldSinkSource: number;
+    greenSinkSource: number;
+    totalFundVnd: number;
+    inflationWarning: boolean;
+  };
+  recent: DailyMetric[];
 }
 
 // ---- Request bodies ----

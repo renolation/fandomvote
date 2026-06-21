@@ -1,5 +1,12 @@
 import { api } from '@/lib/api-client';
-import type { Campaign, CreateCampaignBody, Idol, IdolStatus, Paginated } from '@/types/api';
+import type {
+  AnalyticsOverview,
+  Campaign,
+  CreateCampaignBody,
+  Idol,
+  IdolStatus,
+  Paginated,
+} from '@/types/api';
 
 export interface ResolutionResult {
   outcome: 'A' | 'B';
@@ -21,4 +28,5 @@ export const adminApi = {
   resolveCampaign: (id: string) => api.post<ResolutionResult>(`/admin/campaigns/${id}/resolve`),
   reverseVotes: (id: string) =>
     api.post<{ refundedUsers: number }>(`/admin/campaigns/${id}/reverse-votes`),
+  analyticsOverview: () => api.get<AnalyticsOverview>('/admin/analytics/overview'),
 };

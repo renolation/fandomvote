@@ -8,6 +8,7 @@ export const iapPackages = pgTable(
     sku: text('sku').notNull(),
     title: text('title').notNull(),
     diamondAmount: bigint('diamond_amount', { mode: 'number' }).notNull(),
+    bonusDiamond: bigint('bonus_diamond', { mode: 'number' }).notNull().default(0),
     priceVnd: bigint('price_vnd', { mode: 'number' }).notNull(),
     platform: text('platform'), // APPLE | GOOGLE | null (both)
     isActive: boolean('is_active').notNull().default(true),

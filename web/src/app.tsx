@@ -17,6 +17,8 @@ import { AdminCampaignsPage } from '@/routes/(admin)/campaigns-page';
 import { AdminCampaignCreatePage } from '@/routes/(admin)/campaign-create-page';
 import { AdminShopPage } from '@/routes/(admin)/shop-page';
 import { AdminEventsPage } from '@/routes/(admin)/events-page';
+import { AdminLeaderboardPage } from '@/routes/(admin)/leaderboard-page';
+import { AdminAnalyticsPage } from '@/routes/(admin)/analytics-page';
 import { AdminStubPage } from '@/routes/(admin)/stub-page';
 
 export function App() {
@@ -49,9 +51,11 @@ export function App() {
       <Route element={<RequireAdmin />}>
         <Route path="admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboardPage />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
           <Route path="review" element={<AdminReviewPage />} />
           <Route path="campaigns" element={<AdminCampaignsPage />} />
           <Route path="campaigns/new" element={<AdminCampaignCreatePage />} />
+          <Route path="leaderboards" element={<AdminLeaderboardPage />} />
           <Route path="shop" element={<AdminShopPage />} />
           <Route path="events" element={<AdminEventsPage />} />
           <Route path="orders" element={<AdminStubPage title="Đơn hàng (Physical)" />} />

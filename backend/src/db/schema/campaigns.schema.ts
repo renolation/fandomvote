@@ -1,4 +1,4 @@
-import { bigint, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { bigint, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { campaignStatusEnum } from './enums';
 import { users } from './users.schema';
 
@@ -10,6 +10,7 @@ export const campaigns = pgTable('campaigns', {
   rulesContent: text('rules_content'), // HTML/markdown — nút "Thể lệ"
   starGoal: bigint('star_goal', { mode: 'number' }).notNull(),
   donationRatioBps: integer('donation_ratio_bps').notNull().default(5000),
+  rewardConfig: jsonb('reward_config'), // cấu hình thưởng (Vote LED / kịch bản A…)
   status: campaignStatusEnum('status').notNull().default('DRAFT'),
   openAt: timestamp('open_at', { withTimezone: true }),
   closeAt: timestamp('close_at', { withTimezone: true }),

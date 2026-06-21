@@ -8,12 +8,12 @@ import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notification/notification.service';
 
 export interface ResolutionResult {
-  outcome: 'A' | 'B'; // A: top đạt goal (Vote LED). B: trượt → quỹ + biên lai.
+  outcome: 'A' | 'B'; // A: top đạt goal (Vote LED). B: trượt → quỹ + biên lai per-user.
   topIdolId: string | null;
   topVotes: number;
   goldTotal: number;
   fundVnd: number | null;
-  receiptNo: string | null;
+  receiptsCount: number;
 }
 
 // Resolution idempotent qua CAS CLOSED→RESOLVING. Chỉ đọc snapshot đông cứng — §6.
@@ -58,18 +58,31 @@ export class ResolutionService {
       const goldTotal = Number((goldRes.rows[0] as { s: string }).s);
 
       let fundVnd: number | null = null;
-      let receiptNo: string | null = null;
+      let receiptsCount = 0;
       if (!reachedGoal) {
-        fundVnd = fundFromGold(goldTotal, campaign.donationRatioBps);
-        receiptNo = `FDV-${campaignId.slice(0, 8).toUpperCase()}-${campaign.closedAt?.getTime() ?? Date.now()}`;
-        await tx.insert(donationReceipts).values({
-          campaignId,
-          fundVnd,
-          goldTotal,
-          donationRatioBps: campaign.donationRatioBps,
-          receiptNo,
-          details: { topIdolId: top?.idolId ?? null, topVotes, starGoal: campaign.starGoal },
-        });
+        // Biên lai PER-USER: mỗi voter Gold 1 dòng. Quỹ = Σ donatedVnd (sum-of-floor, khớp invariant 5).
+        const perUser = await tx.execute(sql`
+          SELECT user_id, COALESCE(SUM(amount), 0) AS gold FROM vote_logs
+          WHERE campaign_id = ${campaignId} AND currency = 'GOLD' AND is_reversal = false
+          GROUP BY user_id HAVING COALESCE(SUM(amount), 0) > 0
+        `);
+        const stamp = campaign.closedAt?.getTime() ?? campaign.createdAt.getTime();
+        let fund = 0;
+        for (const row of perUser.rows as Array<{ user_id: string; gold: string }>) {
+          const goldVoted = Number(row.gold);
+          const donatedVnd = fundFromGold(goldVoted, campaign.donationRatioBps);
+          fund += donatedVnd;
+          await tx.insert(donationReceipts).values({
+            campaignId,
+            userId: row.user_id,
+            goldVoted,
+            donatedVnd,
+            donationRatioBps: campaign.donationRatioBps,
+            receiptNo: `HEART-${campaignId.slice(0, 8)}-${row.user_id.slice(0, 8)}-${stamp}`,
+          });
+          receiptsCount++;
+        }
+        fundVnd = fund;
       }
 
       // Thông báo kết quả cho mọi voter (A: chúc mừng / B: an ủi — §6 luật C).
@@ -107,7 +120,7 @@ export class ResolutionService {
         topVotes,
         goldTotal,
         fundVnd,
-        receiptNo,
+        receiptsCount,
       };
     });
   }

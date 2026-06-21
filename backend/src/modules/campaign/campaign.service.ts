@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, desc, eq, lte } from 'drizzle-orm';
+import { and, asc, desc, eq, lte, sql } from 'drizzle-orm';
 import { Database, DRIZZLE } from '../../db/drizzle.provider';
 import { DbOrTx } from '../../db/types';
 import {
@@ -110,7 +110,7 @@ export class CampaignService {
     }
   }
 
-  // Kết quả sau RESOLVED: snapshot xếp hạng + biên lai quỹ (nếu có).
+  // Kết quả sau RESOLVED: snapshot xếp hạng + tổng quỹ (biên lai per-user → tổng).
   async getResult(campaignId: string) {
     const campaign = await this.getById(campaignId);
     const snapshot = await this.db
@@ -118,12 +118,27 @@ export class CampaignService {
       .from(campaignSnapshots)
       .where(eq(campaignSnapshots.campaignId, campaignId))
       .orderBy(asc(campaignSnapshots.rank));
-    const receipt = await this.db
+    const agg = await this.db.execute(sql`
+      SELECT COALESCE(SUM(donated_vnd), 0) AS fund, COUNT(*) AS receipts
+      FROM donation_receipts WHERE campaign_id = ${campaignId}
+    `);
+    const row = agg.rows[0] as { fund: string; receipts: string };
+    return {
+      campaign,
+      snapshot,
+      fundVnd: Number(row.fund),
+      receiptsCount: Number(row.receipts),
+    };
+  }
+
+  // Biên lai từng user (immutable). Trả null nếu user không vote Gold campaign này.
+  async getMyReceipt(campaignId: string, userId: string) {
+    const rows = await this.db
       .select()
       .from(donationReceipts)
-      .where(eq(donationReceipts.campaignId, campaignId))
+      .where(and(eq(donationReceipts.campaignId, campaignId), eq(donationReceipts.userId, userId)))
       .limit(1);
-    return { campaign, snapshot, receipt: receipt[0] ?? null };
+    return rows[0] ?? null;
   }
 
   // Scheduler: OPEN→CLOSED khi quá close_at + snapshot idempotent — §6/§16.

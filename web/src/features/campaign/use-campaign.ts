@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CampaignStatus } from '@/types/api';
+import { useAuth } from '@/features/auth/auth-context';
 import { campaignApi } from './campaign-api';
 
 export function useCampaigns(status?: CampaignStatus) {
@@ -28,6 +29,16 @@ export function useCampaignResult(id: string | undefined) {
     queryKey: ['campaign-result', id],
     queryFn: () => campaignApi.result(id!),
     enabled: !!id,
+  });
+}
+
+// Biên lai quyên góp của chính user (chỉ khi đã auth + campaign RESOLVED).
+export function useMyReceipt(id: string | undefined, enabled = true) {
+  const { isAuthed } = useAuth();
+  return useQuery({
+    queryKey: ['my-receipt', id],
+    queryFn: () => campaignApi.myReceipt(id!),
+    enabled: !!id && isAuthed && enabled,
   });
 }
 

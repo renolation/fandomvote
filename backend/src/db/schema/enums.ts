@@ -18,6 +18,7 @@ export const ledgerSourceEnum = pgEnum('ledger_source', [
   'PURCHASE',
   'OFFERWALL_CHARGEBACK',
   'ADMIN_ADJUST',
+  'REWARD', // thưởng leaderboard (Top Voter/Earner)
 ]);
 
 export const userRoleEnum = pgEnum('user_role', ['USER', 'ADMIN']);
@@ -53,6 +54,12 @@ export const pointEventTypeEnum = pgEnum('point_event_type', [
   'EARN_MULTIPLIER',
   'TOPUP_MULTIPLIER',
 ]);
+export const pointEventTargetEnum = pgEnum('point_event_target', ['GOLD', 'DIAMOND', 'GREEN', 'ALL']);
+
+// User leaderboards — §17
+export const leaderboardTypeEnum = pgEnum('leaderboard_type', ['TOP_VOTER', 'TOP_EARNER']);
+export const leaderboardPeriodEnum = pgEnum('leaderboard_period', ['DAY', 'WEEK', 'MONTH']);
+export const rewardStatusEnum = pgEnum('reward_status', ['PENDING', 'APPROVED', 'SENT']);
 
 export const verificationChannelEnum = pgEnum('verification_channel', ['EMAIL', 'PHONE']);
 export const verificationPurposeEnum = pgEnum('verification_purpose', [

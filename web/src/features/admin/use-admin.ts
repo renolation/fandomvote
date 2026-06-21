@@ -10,6 +10,10 @@ export function usePendingIdols() {
   });
 }
 
+export function useAnalyticsOverview() {
+  return useQuery({ queryKey: ['admin-analytics'], queryFn: adminApi.analyticsOverview });
+}
+
 type CampaignActionResult =
   | Campaign
   | { closed: boolean }

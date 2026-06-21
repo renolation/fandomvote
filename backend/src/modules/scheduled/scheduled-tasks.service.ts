@@ -5,6 +5,10 @@ import { Database, DRIZZLE } from '../../db/drizzle.provider';
 import { greenDailyCounter, idempotencyKeys } from '../../db/schema';
 import { addDays, vnDateString } from '../../common/utils/time.util';
 import { CampaignService } from '../campaign/campaign.service';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { type BoardType, LeaderboardService } from '../leaderboard/leaderboard.service';
+
+const BOARDS: BoardType[] = ['TOP_VOTER', 'TOP_EARNER'];
 
 // Lazy-first, cron tối thiểu — §16. KHÔNG cron cho Green expiration (lazy qua query).
 @Injectable()
@@ -14,6 +18,8 @@ export class ScheduledTasksService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly campaign: CampaignService,
+    private readonly leaderboard: LeaderboardService,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   // OPEN→CLOSED khi quá close_at + snapshot (atomic, idempotent).
@@ -56,5 +62,25 @@ export class ScheduledTasksService {
       this.logger.error(`RECONCILE: ${overStock.rows.length} deal stock_sold > stock`);
     }
     this.logger.log('Đối soát invariant hoàn tất');
+  }
+
+  // Snapshot leaderboard kỳ trước + analytics nightly — §17/§18. TZ container = UTC+7.
+  @Cron('5 0 * * *') // 00:05 mỗi ngày
+  async dailySnapshotAndAnalytics(): Promise<void> {
+    for (const b of BOARDS) await this.leaderboard.snapshotPreviousPeriod(b, 'DAY');
+    await this.analytics.computeDaily();
+    this.logger.log('Snapshot DAY + analytics nightly xong');
+  }
+
+  @Cron('10 0 * * 1') // 00:10 Thứ 2 — kỳ tuần trước
+  async weeklySnapshot(): Promise<void> {
+    for (const b of BOARDS) await this.leaderboard.snapshotPreviousPeriod(b, 'WEEK');
+    this.logger.log('Snapshot WEEK xong');
+  }
+
+  @Cron('15 0 1 * *') // 00:15 ngày 1 — kỳ tháng trước
+  async monthlySnapshot(): Promise<void> {
+    for (const b of BOARDS) await this.leaderboard.snapshotPreviousPeriod(b, 'MONTH');
+    this.logger.log('Snapshot MONTH xong');
   }
 }

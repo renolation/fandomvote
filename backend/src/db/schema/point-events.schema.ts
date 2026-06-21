@@ -1,5 +1,5 @@
 import { bigint, boolean, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { pointEventTypeEnum } from './enums';
+import { pointEventTargetEnum, pointEventTypeEnum } from './enums';
 
 // Trùng giờ KHÔNG cộng dồn → lấy multiplier cao nhất theo priority — §8.
 // multiplier lưu basis points (20000 = x2.0). Trần bonus tránh lạm phát.
@@ -7,6 +7,10 @@ export const pointEvents = pgTable('point_events', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
   type: pointEventTypeEnum('type').notNull(),
+  targetCurrency: pointEventTargetEnum('target_currency').notNull().default('ALL'),
+  appliesToSources: text('applies_to_sources').array(), // null = mọi source hợp lệ
+  bannerText: text('banner_text'),
+  bannerImage: text('banner_image'),
   multiplierBps: integer('multiplier_bps').notNull(), // 20000 = x2
   priority: integer('priority').notNull().default(0),
   startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),

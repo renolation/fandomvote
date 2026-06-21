@@ -34,9 +34,16 @@ export class CampaignController {
 
   @Public()
   @Get(':id/result')
-  @ApiOperation({ summary: 'Kết quả + biên lai quỹ (sau RESOLVED)' })
+  @ApiOperation({ summary: 'Kết quả + tổng quỹ (sau RESOLVED)' })
   result(@Param('id') id: string) {
     return this.campaign.getResult(id);
+  }
+
+  @ApiBearerAuth()
+  @Get(':id/receipt')
+  @ApiOperation({ summary: 'Biên lai quyên góp của chính tôi (per-user)' })
+  myReceipt(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.campaign.getMyReceipt(id, user.id);
   }
 
   @ApiBearerAuth()

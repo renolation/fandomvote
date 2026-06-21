@@ -1,8 +1,8 @@
-import { index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { bigint, index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { referralStatusEnum } from './enums';
 import { users } from './users.schema';
 
-// 1 referee = 1 record (unique). PENDING→REWARDED khi referee verify — §9.
+// 1 referee = 1 record (unique). PENDING→REWARDED khi referee tự kiếm 500 Gold lũy kế — §9.
 export const referrals = pgTable(
   'referrals',
   {
@@ -14,6 +14,7 @@ export const referrals = pgTable(
       .notNull()
       .references(() => users.id),
     status: referralStatusEnum('status').notNull().default('PENDING'),
+    refereeGoldEarned: bigint('referee_gold_earned', { mode: 'number' }).notNull().default(0), // mốc lũy kế 500
     signupIp: text('signup_ip'),
     deviceFingerprint: text('device_fingerprint'),
     rewardedAt: timestamp('rewarded_at', { withTimezone: true }),

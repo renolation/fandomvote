@@ -11,6 +11,7 @@ export const idols = pgTable(
     nameNormalized: text('name_normalized').notNull(),
     aliases: text('aliases').array(),
     avatarUrl: text('avatar_url'),
+    bio: text('bio'),
     status: idolStatusEnum('status').notNull().default('PENDING'),
     nominatedBy: uuid('nominated_by').references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

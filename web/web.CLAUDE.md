@@ -41,7 +41,8 @@ web/src/
 - Endpoint: `register`, `login`, `google`, `refresh`, `logout`, `GET /auth/me`. Guard route theo role **USER/ADMIN** — nhớ: **client guard chỉ là UX**, backend mới thực thi quyền (role nằm trong access token).
 - **Đăng ký:** `POST /auth/register` (email **hoặc** phone + password + displayName, `referralCode` optional = userId người giới thiệu).
 - **Gmail:** `POST /auth/google { idToken, referralCode? }` — popup điền mã mời TRƯỚC khi vào app, có thể bỏ qua.
-- **Verify email/SĐT (mới — gate referral):** `POST /auth/verify/request { channel: EMAIL|PHONE }` gửi OTP → màn nhập OTP → `POST /auth/verify/confirm { channel, otp }`. **Referrer + referee chỉ nhận 500 Green SAU khi referee verify** → UI nhắc verify để nhận thưởng; hiển thị trạng thái từ API, không tự suy.
+- **Verify email/SĐT:** `POST /auth/verify/request { channel: EMAIL|PHONE }` gửi OTP → màn nhập OTP → `POST /auth/verify/confirm { channel, otp }` (xác thực tài khoản).
+- **Referral (INSTRUCTION mới):** mã mời = userId; điền lúc đăng ký (optional, 1 lần). **Cả referrer + referee nhận 500 GOLD khi referee tự kiếm đủ 500 Gold lũy kế** (video/task/offerwall) — KHÔNG phải khi verify, KHÔNG phải Green. UI ô/popup nhập mã PHẢI hiển thị rule này; trạng thái lấy từ `GET /referrals/me`, không tự suy.
 
 ---
 
@@ -58,7 +59,8 @@ web/src/
 - Leaderboard `GET /campaigns/:id/leaderboard` (poll 5–10s) → mảng `{ campaignIdolId, idolId, name, avatarUrl, totalVotes, reachedValueAt }`. Nhiều campaign song song.
 - Form vote: nhập N → `POST /votes { campaignIdolId, amount }` + header `Idempotency-Key`. Response `{ greenSpent, goldSpent, newTotal, balance }` — hiển thị "Green trừ trước → Gold sau" từ response, **không tự trừ**. Refetch balance + leaderboard sau vote.
 - Nút **📋 Thể lệ**: render `rules_content` của `GET /campaigns/:id` (HTML/markdown).
-- Campaign `CLOSED/RESOLVED` → disable vote. Kết quả: `GET /campaigns/:id/result` → `{ campaign, snapshot[], receipt }`. **A** (đạt mốc → Vote LED) `receipt=null`; **B** (trượt) có `receipt.fundVnd` (biên lai quỹ).
+- Campaign `CLOSED/RESOLVED` → disable vote. Kết quả: `GET /campaigns/:id/result` → `{ campaign, snapshot[], receipt }`. **A** (đạt mốc → Vote LED) `receipt=null`; **B** (trượt) có biên lai quỹ **per-user** (`receipt` của chính user: `goldVoted`, `donatedVnd`).
+- **Bảng xếp hạng USER** (1 hàng DƯỚI bảng idol, dạng carousel): **Top Voter** (tổng vote Green+Gold) / **Top Earner** (Gold cày được) × khung **NGÀY/TUẦN/THÁNG**. *(Phase 4 — backend chưa có endpoint, spec ở §12.)*
 
 ## 5. Đề cử idol
 - Nhập tên → `GET /idols/check?name=` real-time (debounce 300–500ms) → `{ duplicate, idol? }`.
@@ -73,7 +75,7 @@ web/src/
 - **IAP / Offer Wall:** cộng tiền do backend xác nhận qua webhook/postback — web **không tự cộng**; poll balance để thấy cập nhật.
 
 ## 7. Profile (User web)
-Info cá nhân (`GET /auth/me`) · Ví (§3) · Ví Quà · Mã mời · Đề cử của tôi · Hoạt động vote · Notification · Information · Cài đặt.
+Info cá nhân (`GET /auth/me`) · Ví (§3) · Ví Quà · Mã mời · Đề cử của tôi · Hoạt động vote · **Xếp hạng của tôi** (vị trí Top Voter/Earner — Phase 4) · Notification · Information · Cài đặt.
 - **Ví Quà:** `GET /shop/gifts` (lọc theo status). DIGITAL: `POST /shop/gifts/:id/use` (ACTIVE→USED, hiện mã/QR). PHYSICAL: `POST /shop/gifts/:id/confirm { shippingAddressId }` (PENDING→CONFIRMED) — cần địa chỉ trước: `GET/POST /shop/addresses`. UI cảnh báo **quá hạn xác nhận → EXPIRED, không hoàn điểm**.
 - **Mã mời:** `GET /referrals/me` → `{ referralCode (=userId), totalInvited, totalRewarded }`. Copy mã.
 - **Hoạt động vote:** `GET /votes/activity?limit=&cursor=`.
@@ -86,7 +88,7 @@ Layout sidebar + nội dung, mật độ cao (dashboard/bảng). Tất cả rout
 - **Duyệt idol:** `POST /admin/idols/:id/approve` · `/reject`.
 - **Campaign:** `POST /admin/campaigns` (tạo DRAFT — `starGoal`, `donationRatioBps` mặc định 5000=50%, `rulesContent`, `closeAt`) · `/:id/open` (DRAFT→OPEN) · `/:id/close` (đóng + snapshot) · `/:id/resolve` (chạy A/B + quỹ + biên lai) · `/:id/reverse-votes` (hủy → hoàn vote).
 - `star_goal` không cho sửa sau OPEN (disable theo state từ API). `donation_ratio` là **basis points** (5000 = 0.5) — UI nhập % rồi ×100.
-- Đầy đủ (Phase 4): shop/deals/stock/partners/IAP, point event config, đơn physical, đối soát, Information, quản lý user/gian lận/gỡ idol.
+- Đầy đủ (Phase 4): shop/deals/stock/partners/IAP, point event config, đơn physical, **duyệt & trao thưởng leaderboard user (Top Voter/Earner theo kỳ → APPROVED → SENT)**, **analytics dashboard** (DAU/revenue/Gold liability/quỹ + cảnh báo sink/source<1), đối soát, Information, quản lý user/gian lận/gỡ idol.
 - Mọi hành động ghi tiền/đổi trạng thái → gọi API; admin web không tự tính.
 
 ---
@@ -117,7 +119,7 @@ Layout sidebar + nội dung, mật độ cao (dashboard/bảng). Tất cả rout
 - **1 Vote:** leaderboard, form vote, đề cử idol + check trùng, thể lệ, referral đăng ký, admin tối thiểu.
 - **2 Shop:** daily reward → IAP → special deals + ví quà (offerwall mock), banner point event.
 - **3 Profile:** ví+ledger, ví quà, mã mời, đề cử của tôi, hoạt động vote, notification, information, settings.
-- **4 Nâng cao:** màn resolution A/B/C, Vote LED, biên lai quỹ, admin đầy đủ + đối soát.
+- **4 Nâng cao:** màn resolution A/B/C, Vote LED, biên lai quỹ (per-user), **bảng xếp hạng user + xếp hạng của tôi**, **analytics dashboard (admin)**, admin đầy đủ + đối soát.
 
 ---
 
@@ -136,7 +138,8 @@ Layout sidebar + nội dung, mật độ cao (dashboard/bảng). Tất cả rout
 | Shop | `GET /shop/deals` · `POST /shop/deals/:id/redeem` 🔒🔑 · `GET /shop/daily-reward` · `POST /shop/daily-reward/claim` 🔒 · `GET /shop/gifts` 🔒 · `POST /shop/gifts/:id/use` 🔒 · `/shop/gifts/:id/confirm` 🔒 · `GET/POST /shop/addresses` 🔒 |
 | Events | `GET /events/active` |
 | Notification | `GET /notifications` 🔒 · `/notifications/unread-count` 🔒 · `PATCH /notifications/:id/read` 🔒 · `/notifications/read-all` 🔒 |
-| Admin 👑 | `POST /admin/idols/:id/approve` · `/reject` · `POST /admin/campaigns` · `/:id/open` · `/:id/close` · `/:id/resolve` · `/:id/reverse-votes` |
+| Leaderboard *(Phase 4 — spec, chưa implement)* | `GET /leaderboards?type=TOP_VOTER\|TOP_EARNER&period=DAY\|WEEK\|MONTH` · `GET /leaderboards/me` 🔒 |
+| Admin 👑 | `GET /admin/idols?status=` · `POST /admin/idols/:id/approve` · `/reject` · `POST /admin/campaigns` · `/:id/open` · `/:id/close` · `/:id/resolve` · `/:id/reverse-votes` *(Phase 4 spec: duyệt/trao thưởng leaderboard, analytics)* |
 
 **Cursor pagination:** query `?limit=&cursor=` → `{ items: [...], nextCursor: string | null }` (ledger, notifications, vote activity, idols).
 

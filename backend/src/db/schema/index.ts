@@ -23,3 +23,8 @@ export * from './donation-receipts.schema';
 export * from './platform-config.schema';
 export * from './verification-tokens.schema';
 export * from './admin-audit-log.schema';
+export * from './leaderboard-snapshots.schema';
+export * from './analytics-events.schema';
+export * from './daily-metrics.schema';
+export * from './user-metrics.schema';
+export * from './cohort-retention.schema';

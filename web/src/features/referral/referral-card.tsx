@@ -42,7 +42,8 @@ export function ReferralCard() {
         </div>
       </div>
       <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>
-        Bạn & người được mời nhận 500 Green sau khi người đó xác thực email/SĐT.
+        Bạn & người được mời cùng nhận 500 Gold khi người đó cày tích luỹ đủ 500 Gold đầu tiên
+        (video / nhiệm vụ / offerwall).
       </p>
     </NeuCard>
   );

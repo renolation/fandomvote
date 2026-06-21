@@ -5,20 +5,16 @@ import { Database, DRIZZLE } from '../../db/drizzle.provider';
 import { users, verificationTokens } from '../../db/schema';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { addSeconds } from '../../common/utils/time.util';
-import { ReferralService } from '../referral/referral.service';
 
 type Channel = 'EMAIL' | 'PHONE';
 const OTP_TTL_SECONDS = 15 * 60;
 
-// Verify email/SĐT → set verified_at → kích hoạt referral REWARDED — §11/§9.
+// Verify email/SĐT → set verified_at. (Referral KHÔNG còn gate bởi verify — §9 mới: theo mốc 500 Gold.)
 @Injectable()
 export class VerificationService {
   private readonly logger = new Logger('Verification');
 
-  constructor(
-    @Inject(DRIZZLE) private readonly db: Database,
-    private readonly referral: ReferralService,
-  ) {}
+  constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   private hash(token: string): string {
     return createHash('sha256').update(token).digest('hex');
@@ -64,8 +60,6 @@ export class VerificationService {
         .update(users)
         .set(channel === 'EMAIL' ? { emailVerifiedAt: new Date() } : { phoneVerifiedAt: new Date() })
         .where(eq(users.id, userId));
-      // Referee verify → thưởng referral (cả hai), dưới lock referrer.
-      await this.referral.rewardOnVerify(tx, userId);
     });
   }
 }

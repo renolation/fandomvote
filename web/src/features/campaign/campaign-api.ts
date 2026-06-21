@@ -4,6 +4,7 @@ import type {
   CampaignIdol,
   CampaignResult,
   CampaignStatus,
+  DonationReceipt,
   LeaderboardEntry,
 } from '@/types/api';
 
@@ -12,6 +13,7 @@ export const campaignApi = {
   get: (id: string) => api.get<Campaign>(`/campaigns/${id}`),
   leaderboard: (id: string) => api.get<LeaderboardEntry[]>(`/campaigns/${id}/leaderboard`),
   result: (id: string) => api.get<CampaignResult>(`/campaigns/${id}/result`),
+  myReceipt: (id: string) => api.get<DonationReceipt | null>(`/campaigns/${id}/receipt`),
   addIdol: (id: string, idolId: string) =>
     api.post<CampaignIdol>(`/campaigns/${id}/idols`, { idolId }),
 };

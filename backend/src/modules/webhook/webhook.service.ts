@@ -9,6 +9,7 @@ import { DIAMOND_TO_GOLD } from '../../common/utils/money.util';
 import { lockUser } from '../../common/utils/wallet-lock.util';
 import { IdempotencyService, WEBHOOK_TTL_SECONDS } from '../idempotency/idempotency.service';
 import { EventsService } from '../events/events.service';
+import { ReferralService } from '../referral/referral.service';
 import { LedgerService } from '../wallet/ledger.service';
 import { IapWebhookDto, OfferwallPostbackDto } from './dto/webhook.dto';
 
@@ -21,6 +22,7 @@ export class WebhookService {
     private readonly idempotency: IdempotencyService,
     private readonly ledger: LedgerService,
     private readonly events: EventsService,
+    private readonly referral: ReferralService,
   ) {}
 
   private verify(secret: string, message: string, signature: string): void {
@@ -82,6 +84,8 @@ export class WebhookService {
           'offerwall',
           dto.transactionId,
         );
+        // Gold-earn → kiểm mốc referral 500 Gold lũy kế (§9). EVENT_BONUS không tính vào mốc.
+        await this.referral.onGoldEarned(tx, dto.userId);
         result = { credited: dto.goldAmount, bonus };
       }
       await this.idempotency.complete(tx, `offerwall:${dto.transactionId}`, result);

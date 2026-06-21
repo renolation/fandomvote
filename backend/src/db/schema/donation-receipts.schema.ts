@@ -1,7 +1,8 @@
-import { bigint, integer, pgTable, jsonb, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { bigint, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { campaigns } from './campaigns.schema';
+import { users } from './users.schema';
 
-// IMMUTABLE — chỉ INSERT. Quỹ = floor(Σ GOLD × ratio). 1 campaign = 1 receipt — §6/§12.
+// PER-USER + IMMUTABLE — mỗi voter Gold 1 biên lai (§6/§12). Σ donatedVnd = quỹ campaign.
 export const donationReceipts = pgTable(
   'donation_receipts',
   {
@@ -9,15 +10,17 @@ export const donationReceipts = pgTable(
     campaignId: uuid('campaign_id')
       .notNull()
       .references(() => campaigns.id),
-    fundVnd: bigint('fund_vnd', { mode: 'number' }).notNull(),
-    goldTotal: bigint('gold_total', { mode: 'number' }).notNull(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    goldVoted: bigint('gold_voted', { mode: 'number' }).notNull(),
+    donatedVnd: bigint('donated_vnd', { mode: 'number' }).notNull(),
     donationRatioBps: integer('donation_ratio_bps').notNull(),
     receiptNo: text('receipt_no').notNull(),
-    details: jsonb('details'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
-    campaignUq: uniqueIndex('donation_receipts_campaign_uq').on(t.campaignId),
+    campaignUserUq: uniqueIndex('donation_receipts_campaign_user_uq').on(t.campaignId, t.userId),
     receiptNoUq: uniqueIndex('donation_receipts_no_uq').on(t.receiptNo),
   }),
 );

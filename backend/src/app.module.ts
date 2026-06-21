@@ -20,6 +20,8 @@ import { ShopModule } from './modules/shop/shop.module';
 import { EventsModule } from './modules/events/events.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ScheduledModule } from './modules/scheduled/scheduled.module';
 
@@ -45,6 +47,8 @@ import { ScheduledModule } from './modules/scheduled/scheduled.module';
     EventsModule,
     WebhookModule,
     NotificationModule,
+    LeaderboardModule,
+    AnalyticsModule,
     AdminModule,
     ScheduledModule,
   ],

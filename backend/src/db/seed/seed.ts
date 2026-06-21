@@ -237,10 +237,10 @@ async function seedMore(): Promise<void> {
     ])
     .onConflictDoNothing();
 
-  // Biên lai quỹ cho campaign RESOLVED (outcome B)
+  // Biên lai quỹ PER-USER cho campaign RESOLVED (outcome B) — demo 1 voter
   await db
     .insert(donationReceipts)
-    .values({ campaignId: CAMP_RESOLVED, fundVnd: 1_400_000, goldTotal: 2_800_000, donationRatioBps: 5000, receiptNo: 'HEART-2026-0204', details: { note: 'demo' } })
+    .values({ campaignId: CAMP_RESOLVED, userId: USER_ID, goldVoted: 2_800_000, donatedVnd: 1_400_000, donationRatioBps: 5000, receiptNo: 'HEART-2026-0204-user' })
     .onConflictDoNothing();
 
   // Notifications cho user demo (badge)
