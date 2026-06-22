@@ -1,6 +1,25 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Campaign, CreateCampaignBody } from '@/types/api';
 import { adminApi, type ResolutionResult } from './admin-api';
+
+export function useAdminUsers(search: string, flaggedOnly: boolean) {
+  return useInfiniteQuery({
+    queryKey: ['admin-users', search, flaggedOnly],
+    queryFn: ({ pageParam }) =>
+      adminApi.listUsers({ search: search || undefined, flagged: flaggedOnly || undefined, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+}
+
+export function useFlagUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; flag: boolean }) =>
+      v.flag ? adminApi.flagUser(v.id) : adminApi.unflagUser(v.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  });
+}
 
 export function usePendingIdols() {
   return useQuery({
@@ -12,6 +31,38 @@ export function usePendingIdols() {
 
 export function useAnalyticsOverview() {
   return useQuery({ queryKey: ['admin-analytics'], queryFn: adminApi.analyticsOverview });
+}
+
+// ---- Đơn hàng PHYSICAL ----
+export function useOrders(status: string) {
+  return useQuery({
+    queryKey: ['admin-orders', status],
+    queryFn: () => adminApi.orders(status),
+  });
+}
+
+export function useOrderAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; action: 'ship' | 'deliver' }) =>
+      v.action === 'ship' ? adminApi.shipOrder(v.id) : adminApi.deliverOrder(v.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-orders'] }),
+  });
+}
+
+// ---- Đối soát tiền ----
+export function useReconcileSummary() {
+  return useQuery({ queryKey: ['admin-reconcile'], queryFn: adminApi.reconcileSummary });
+}
+
+export function useLedger(source: string) {
+  return useInfiniteQuery({
+    queryKey: ['admin-ledger', source],
+    queryFn: ({ pageParam }) =>
+      adminApi.ledger({ source: source || undefined, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
 }
 
 type CampaignActionResult =

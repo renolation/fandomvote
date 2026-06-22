@@ -23,6 +23,12 @@ export class IdolController {
     return this.idol.checkDuplicate(q.name);
   }
 
+  @Get('mine')
+  @ApiOperation({ summary: 'Idol tôi đã đề cử (mọi trạng thái)' })
+  mine(@CurrentUser() user: AuthUser) {
+    return this.idol.listMine(user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Chi tiết idol' })
   get(@Param('id') id: string) {

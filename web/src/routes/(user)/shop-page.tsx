@@ -3,6 +3,8 @@ import { countdownLabel } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import { DailyRewardCard } from '@/features/shop/daily-reward-card';
 import { DealList } from '@/features/shop/deal-list';
+import { OfferWall } from '@/features/shop/offer-wall';
+import { IapPackageGrid } from '@/features/shop/iap-package-grid';
 import { useActiveEvents } from '@/features/shop/use-shop';
 
 function EventHero() {
@@ -20,7 +22,7 @@ function EventHero() {
           {ev.title} ×{(ev.multiplierBps / 10000).toFixed(1)}
         </div>
         <div style={{ fontSize: 15, fontWeight: 600, marginTop: 4 }}>
-          Hoàn thành giao dịch trong thời gian sự kiện để nhận thưởng nhân đôi.
+          Hoàn thành nhiệm vụ nhận gấp đôi Gold trong thời gian giới hạn.
         </div>
       </div>
       <div style={{ textAlign: 'center' }}>
@@ -46,13 +48,19 @@ export function ShopPage() {
       <EventHero />
       <DailyRewardCard />
 
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+        <OfferWall />
+        <IapPackageGrid />
+      </div>
+
       <div>
         <h3 style={{ margin: '0 0 13px' }}>🎁 Ưu đãi đối tác</h3>
         <DealList />
       </div>
 
       <p className="muted" style={{ fontSize: 12 }}>
-        💎 Nạp Diamond / ⚡ Offer Wall: điểm được cộng sau khi backend xác nhận (webhook/postback). Số dư tự cập nhật.
+        💎 Diamond cộng sau khi xác nhận thanh toán (App Store / Google Play). ⚡ Gold offer wall cộng sau postback của
+        nhà cung cấp. Số dư tự cập nhật.
       </p>
     </div>
   );

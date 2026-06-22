@@ -1,11 +1,15 @@
 import { api } from '@/lib/api-client';
 import type {
+  AdminLedgerRow,
+  AdminOrder,
+  AdminUser,
   AnalyticsOverview,
   Campaign,
   CreateCampaignBody,
   Idol,
   IdolStatus,
   Paginated,
+  ReconcileSummary,
 } from '@/types/api';
 
 export interface ResolutionResult {
@@ -29,4 +33,20 @@ export const adminApi = {
   reverseVotes: (id: string) =>
     api.post<{ refundedUsers: number }>(`/admin/campaigns/${id}/reverse-votes`),
   analyticsOverview: () => api.get<AnalyticsOverview>('/admin/analytics/overview'),
+  listUsers: (params: { search?: string; flagged?: boolean; cursor?: string }) =>
+    api.get<Paginated<AdminUser>>('/admin/users', {
+      params: { search: params.search, flagged: params.flagged ? 'true' : undefined, cursor: params.cursor },
+    }),
+  flagUser: (id: string) => api.post<AdminUser>(`/admin/users/${id}/flag`),
+  unflagUser: (id: string) => api.post<AdminUser>(`/admin/users/${id}/unflag`),
+
+  // Đơn hàng PHYSICAL — fulfilment.
+  orders: (status?: string) => api.get<AdminOrder[]>('/admin/orders', { params: { status } }),
+  shipOrder: (id: string) => api.post<AdminOrder>(`/admin/orders/${id}/ship`),
+  deliverOrder: (id: string) => api.post<AdminOrder>(`/admin/orders/${id}/deliver`),
+
+  // Đối soát tiền — READ-ONLY.
+  reconcileSummary: () => api.get<ReconcileSummary>('/admin/reconcile/summary'),
+  ledger: (params: { source?: string; userId?: string; cursor?: string }) =>
+    api.get<Paginated<AdminLedgerRow>>('/admin/ledger', { params }),
 };

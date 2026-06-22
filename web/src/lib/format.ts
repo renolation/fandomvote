@@ -22,6 +22,21 @@ export function formatDateTime(iso: string | null): string {
   return new Date(iso).toLocaleString('vi-VN', { hour12: false });
 }
 
+// Thời gian tương đối (Vừa xong / N phút trước / Hôm qua…) — chỉ hiển thị.
+export function relativeTime(iso: string | null, nowMs: number): string {
+  if (!iso) return '';
+  const diff = nowMs - new Date(iso).getTime();
+  if (diff < 60_000) return 'Vừa xong';
+  const m = Math.floor(diff / 60_000);
+  if (m < 60) return `${m} phút trước`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} giờ trước`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return 'Hôm qua';
+  if (d < 7) return `${d} ngày trước`;
+  return new Date(iso).toLocaleDateString('vi-VN');
+}
+
 // Đếm ngược dựa mốc SERVER (iso) — chỉ hiển thị, không quyết định nghiệp vụ (§0.3).
 export function countdownLabel(targetIso: string | null, nowMs: number): string {
   if (!targetIso) return '';

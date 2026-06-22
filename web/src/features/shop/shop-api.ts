@@ -3,6 +3,8 @@ import type {
   CreateAddressBody,
   DailyRewardConfig,
   GiftWalletItem,
+  IapPackage,
+  OfferTask,
   PointEvent,
   RedeemResult,
   ShippingAddress,
@@ -11,6 +13,8 @@ import type {
 
 export const shopApi = {
   deals: () => api.get<ShopDeal[]>('/shop/deals'),
+  offers: () => api.get<OfferTask[]>('/shop/offers'),
+  iapPackages: () => api.get<IapPackage[]>('/shop/iap-packages'),
   redeem: (dealId: string) =>
     api.post<RedeemResult>(`/shop/deals/${dealId}/redeem`, undefined, {
       idempotencyKey: newIdempotencyKey(),

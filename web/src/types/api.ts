@@ -18,7 +18,8 @@ export type LedgerSource =
   | 'VOTE_REVERSAL'
   | 'PURCHASE'
   | 'OFFERWALL_CHARGEBACK'
-  | 'ADMIN_ADJUST';
+  | 'ADMIN_ADJUST'
+  | 'REWARD';
 
 export type CampaignStatus =
   | 'DRAFT'
@@ -270,6 +271,32 @@ export interface DailyRewardConfig {
   createdAt: string;
 }
 
+export interface OfferTask {
+  id: string;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  iconBg: string | null;
+  rewardGold: number;
+  provider: string;
+  actionUrl: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface IapPackage {
+  id: string;
+  sku: string;
+  title: string;
+  diamondAmount: number;
+  bonusDiamond: number;
+  priceVnd: number;
+  platform: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface PointEvent {
   id: string;
   title: string;
@@ -359,6 +386,75 @@ export interface AnalyticsOverview {
   recent: DailyMetric[];
 }
 
+// ---- Admin orders (physical gift fulfilment §) ----
+// Thao tác trên gift_wallet_items có item_type='PHYSICAL'.
+export interface AdminOrder {
+  id: string;
+  status: GiftItemStatus;
+  dealTitle: string | null;
+  code: string | null;
+  createdAt: string;
+  confirmedAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  user: { id: string; displayName: string; email: string | null };
+  address: {
+    recipient: string;
+    phone: string;
+    line1: string;
+    line2: string | null;
+    ward: string | null;
+    district: string | null;
+    province: string;
+    note: string | null;
+  } | null;
+}
+
+// ---- Admin reconcile (đối soát tiền — READ-ONLY trên wallet_ledger) ----
+export interface SourceBreakdown {
+  source: string;
+  credited: number;
+  debited: number;
+  realValueVnd: number;
+  count: number;
+}
+export interface ReconcileSummary {
+  iapRevenueVnd: number;
+  offerwallGoldIssued: number;
+  donationFundVnd: number;
+  flaggedUsers: number;
+  negativeGoldUsers: number;
+  bySource: SourceBreakdown[];
+}
+export interface AdminLedgerRow {
+  id: number;
+  userId: string;
+  userName: string | null;
+  currency: Currency;
+  amount: number;
+  source: string;
+  realValueVnd: number;
+  refType: string | null;
+  refId: string | null;
+  createdAt: string;
+}
+
+// ---- Admin user management ----
+export interface AdminUser {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  displayName: string;
+  fandom: string | null;
+  avatarUrl: string | null;
+  role: Role;
+  authProvider: AuthProvider;
+  emailVerifiedAt: string | null;
+  phoneVerifiedAt: string | null;
+  isFlagged: boolean;
+  createdAt: string;
+}
+
 // ---- Request bodies ----
 export interface RegisterBody {
   email?: string;
@@ -389,6 +485,7 @@ export interface NominateIdolBody {
   name: string;
   aliases?: string[];
   avatarUrl?: string;
+  bio?: string;
 }
 export interface CreateCampaignBody {
   title: string;

@@ -1,12 +1,11 @@
-import { NeuCard } from '@/components/neu';
 import { ErrorState, Loading } from '@/components/state-views';
 import { formatNumber } from '@/lib/format';
 import { useBalance } from './use-wallet';
 
-const CARDS: { key: 'green' | 'gold' | 'diamond'; label: string; color: string; note: string }[] = [
-  { key: 'green', label: 'GREEN', color: 'var(--c-green)', note: 'Hết hạn cuối ngày' },
-  { key: 'gold', label: 'GOLD', color: 'var(--c-yellow)', note: '1 Gold = 1đ' },
-  { key: 'diamond', label: 'DIAMOND', color: 'var(--c-blue)', note: '1 = 1.000 Gold' },
+const ROWS: { key: 'green' | 'gold' | 'diamond'; label: string; bg: string; fg: string }[] = [
+  { key: 'green', label: '🟢 Green', bg: '#22C55E', fg: '#fff' },
+  { key: 'gold', label: '🟡 Gold', bg: '#FFD60A', fg: '#0a0a0a' },
+  { key: 'diamond', label: '💎 Diamond', bg: '#3B82F6', fg: '#fff' },
 ];
 
 export function BalanceCards() {
@@ -16,21 +15,28 @@ export function BalanceCards() {
   if (!data) return null;
 
   return (
-    <div className="grid" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-      {CARDS.map((c) => (
-        <NeuCard key={c.key} flat style={{ background: c.color, color: '#111' }}>
-          <div style={{ fontSize: 12, fontWeight: 700 }}>{c.label}</div>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 700 }}>
-            {formatNumber(data[c.key])}
-          </div>
-          <div style={{ fontSize: 10, opacity: 0.8 }}>{c.note}</div>
-        </NeuCard>
+    <div className="col" style={{ gap: 9 }}>
+      {ROWS.map((r) => (
+        <div
+          key={r.key}
+          className="spread"
+          style={{ background: r.bg, color: r.fg, border: '2px solid var(--c-ink)', borderRadius: 10, padding: '10px 13px' }}
+        >
+          <span style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>{r.label}</span>
+          <span className="mono" style={{ fontWeight: 700, fontSize: 16 }}>{formatNumber(data[r.key])}</span>
+        </div>
       ))}
+      <div style={{ marginTop: 2, background: '#FFE08A', border: '2px solid var(--c-ink)', borderRadius: 9, padding: '9px 12px', fontSize: 12, fontWeight: 600 }}>
+        🟢 Green hết hạn vào cuối ngày — hãy dùng sớm.
+      </div>
       {data.gold < 0 && (
-        <div style={{ gridColumn: '1 / -1', color: 'var(--c-pink)', fontWeight: 600, fontSize: 13 }}>
+        <div style={{ color: 'var(--c-pink)', fontWeight: 600, fontSize: 13 }}>
           ⚠️ Tài khoản đang bị khoá chi tiêu (Gold âm).
         </div>
       )}
+      <div className="mono" style={{ fontSize: 10, color: '#999', textAlign: 'center', marginTop: 2 }}>
+        1 🟡 = 1đ · 1 💎 = 1.000 🟡 · 🟢 hết hạn cuối ngày
+      </div>
     </div>
   );
 }

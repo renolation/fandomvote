@@ -6,6 +6,14 @@ export function useDeals() {
   return useQuery({ queryKey: ['deals'], queryFn: shopApi.deals });
 }
 
+export function useOffers() {
+  return useQuery({ queryKey: ['offers'], queryFn: shopApi.offers });
+}
+
+export function useIapPackages() {
+  return useQuery({ queryKey: ['iap-packages'], queryFn: shopApi.iapPackages });
+}
+
 export function useActiveEvents() {
   return useQuery({ queryKey: ['events'], queryFn: shopApi.activeEvents, refetchInterval: 30_000 });
 }

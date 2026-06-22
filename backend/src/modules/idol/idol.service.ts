@@ -45,6 +45,7 @@ export class IdolService {
           nameNormalized: normalized,
           aliases: dto.aliases,
           avatarUrl: dto.avatarUrl,
+          bio: dto.bio,
           status: 'PENDING',
           nominatedBy: userId,
         })
@@ -92,6 +93,15 @@ export class IdolService {
     const hasMore = rows.length > q.limit;
     const items = hasMore ? rows.slice(0, q.limit) : rows;
     return { items, nextCursor: hasMore ? items[items.length - 1].id : null };
+  }
+
+  // Đề cử của tôi — idol do user này đề cử (mọi trạng thái), mới nhất trước — §17 profile.
+  async listMine(userId: string): Promise<Idol[]> {
+    return this.db
+      .select()
+      .from(idols)
+      .where(eq(idols.nominatedBy, userId))
+      .orderBy(desc(idols.createdAt));
   }
 
   async getById(id: string): Promise<Idol> {

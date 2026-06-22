@@ -84,7 +84,8 @@ export function CampaignBoard({ campaign }: { campaign: Campaign }) {
       {podiumOrder.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr 1fr', gap: 14, alignItems: 'end', marginBottom: 26 }}>
           {podiumOrder.map((e) => {
-            const isTop = entries[0]?.campaignIdolId === e.campaignIdolId;
+            const rank = entries.findIndex((x) => x.campaignIdolId === e.campaignIdolId) + 1;
+            const isTop = rank === 1;
             return (
               <div
                 key={e.campaignIdolId}
@@ -93,6 +94,25 @@ export function CampaignBoard({ campaign }: { campaign: Campaign }) {
                 {isTop && <div style={{ fontSize: 30 }}>👑</div>}
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                   <div style={stripeStyle(colorForId(e.idolId), isTop ? 78 : 64)} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+                  <div
+                    className="mono"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 30,
+                      height: 30,
+                      border: '2px solid var(--c-ink)',
+                      borderRadius: 8,
+                      fontWeight: 700,
+                      fontSize: 14,
+                      background: isTop ? 'var(--c-yellow)' : '#f0ebdf',
+                    }}
+                  >
+                    {rank}
+                  </div>
                 </div>
                 <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16, marginTop: 8 }}>{e.name}</div>
                 <div className="mono" style={{ fontWeight: 700, fontSize: 14, color: '#444' }}>{formatNumber(e.totalVotes)} ⭐</div>

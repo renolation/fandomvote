@@ -51,6 +51,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={`neu-toast ${t.kind === 'error' ? 'neu-toast--error' : t.kind === 'success' ? 'neu-toast--success' : ''}`}
             onClick={() => remove(t.id)}
           >
+            <span style={{ fontSize: 17 }}>
+              {t.kind === 'error' ? '✕' : t.kind === 'success' ? '✓' : 'ℹ'}
+            </span>
             {t.message}
           </div>
         ))}

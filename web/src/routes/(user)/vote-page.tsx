@@ -52,12 +52,12 @@ export function VotePage() {
         </NeuButton>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
-        <CampaignBoard campaign={selected} />
-        <div className="col">
-          <VoteSidebar />
+      <div className="split-sidebar">
+        <div className="col" style={{ gap: 28 }}>
+          <CampaignBoard campaign={selected} />
           <UserLeaderboard />
         </div>
+        <VoteSidebar />
       </div>
 
       <NominateDialog open={nominateOpen} onClose={() => setNominateOpen(false)} />

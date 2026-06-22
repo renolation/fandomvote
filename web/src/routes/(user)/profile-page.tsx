@@ -6,37 +6,29 @@ import { useAuth } from '@/features/auth/auth-context';
 import { VerifyPanel } from '@/features/auth/verify-panel';
 import { BalanceCards } from '@/features/wallet/balance-cards';
 import { ConvertDiamondDialog } from '@/features/wallet/convert-diamond-dialog';
-import { LedgerList } from '@/features/wallet/ledger-list';
 import { GiftWallet } from '@/features/shop/gift-wallet';
 import { ReferralCard } from '@/features/referral/referral-card';
 import { VoteActivityList } from '@/features/vote/vote-activity-list';
 import { MyRankCard } from '@/features/leaderboard/my-rank-card';
+import { MyNominationsCard } from '@/features/idol/my-nominations-card';
+import { PlatformInfoCard } from '@/features/profile/platform-info-card';
 
-type Tab = 'gifts' | 'referral' | 'activity' | 'ledger';
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'gifts', label: '🎁 Ví Quà' },
-  { key: 'referral', label: '🔗 Mã mời' },
-  { key: 'activity', label: '📊 Hoạt động vote' },
-  { key: 'ledger', label: '📜 Lịch sử ví' },
-];
+const head: React.CSSProperties = { fontFamily: 'var(--font-head)', fontWeight: 700 };
 
 export function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>('gifts');
   const [convertOpen, setConvertOpen] = useState(false);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 24, alignItems: 'start' }}>
-      {/* Left sticky column */}
+    <div className="split-360">
+      {/* Cột trái — sticky trên desktop */}
       <div className="col" style={{ gap: 18, position: 'sticky', top: 98 }}>
         <NeuCard style={{ textAlign: 'center' }}>
           <div style={{ margin: '0 auto', ...stripeStyle(colorForId(user?.id ?? 'x'), 84) }} />
-          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 21, marginTop: 12 }}>
-            {user?.displayName}
-          </div>
+          <div style={{ ...head, fontSize: 21, marginTop: 12 }}>{user?.displayName}</div>
           <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-            {user?.fandom ?? 'Fan'}
+            Fandom: <strong>{user?.fandom ?? 'Fan'}</strong>
           </div>
           <NeuButton
             variant="pink"
@@ -52,7 +44,7 @@ export function ProfilePage() {
 
         <NeuCard>
           <div className="spread" style={{ marginBottom: 13 }}>
-            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>💼 Ví tiền tệ</span>
+            <span style={{ ...head, fontSize: 16 }}>💼 Ví tiền tệ</span>
             <NeuButton size="sm" variant="ghost" onClick={() => setConvertOpen(true)}>
               Đổi Diamond
             </NeuButton>
@@ -60,24 +52,25 @@ export function ProfilePage() {
           <BalanceCards />
         </NeuCard>
 
-        <MyRankCard />
+        <ReferralCard />
+
+        <NeuCard>
+          <div style={{ ...head, fontSize: 16, marginBottom: 12 }}>📊 Hoạt động vote</div>
+          <VoteActivityList />
+        </NeuCard>
 
         <VerifyPanel />
       </div>
 
-      {/* Right column */}
-      <div className="col">
-        <div className="row" style={{ flexWrap: 'wrap' }}>
-          {TABS.map((t) => (
-            <NeuButton key={t.key} size="sm" variant={tab === t.key ? 'blue' : 'ghost'} onClick={() => setTab(t.key)}>
-              {t.label}
-            </NeuButton>
-          ))}
+      {/* Cột phải — tất cả hiển thị cùng lúc (không tab) */}
+      <div className="col" style={{ gap: 28 }}>
+        <div>
+          <div style={{ ...head, fontSize: 22, marginBottom: 14 }}>🎁 Ví Quà Tặng</div>
+          <GiftWallet />
         </div>
-        {tab === 'gifts' && <GiftWallet />}
-        {tab === 'referral' && <ReferralCard />}
-        {tab === 'activity' && <VoteActivityList />}
-        {tab === 'ledger' && <LedgerList />}
+        <MyNominationsCard />
+        <MyRankCard />
+        <PlatformInfoCard />
       </div>
 
       <ConvertDiamondDialog open={convertOpen} onClose={() => setConvertOpen(false)} />

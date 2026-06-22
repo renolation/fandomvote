@@ -1,8 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { eq } from 'drizzle-orm';
 import { Database, DRIZZLE } from '../../db/drizzle.provider';
-import { GiftWalletItem, ShopDeal, giftWalletItems, shopDeals } from '../../db/schema';
+import { asc, eq } from 'drizzle-orm';
+import {
+  GiftWalletItem,
+  IapPackage,
+  OfferTask,
+  ShopDeal,
+  giftWalletItems,
+  iapPackages,
+  offerTasks,
+  shopDeals,
+} from '../../db/schema';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { addDays } from '../../common/utils/time.util';
 import { lockUser } from '../../common/utils/wallet-lock.util';
@@ -24,6 +33,24 @@ export class ShopService {
 
   async listDeals(): Promise<ShopDeal[]> {
     return this.db.select().from(shopDeals).where(eq(shopDeals.isActive, true));
+  }
+
+  // Danh mục offer wall (đang active). Gold cộng qua webhook offerwall postback, không tại đây.
+  async listOffers(): Promise<OfferTask[]> {
+    return this.db
+      .select()
+      .from(offerTasks)
+      .where(eq(offerTasks.isActive, true))
+      .orderBy(asc(offerTasks.sortOrder));
+  }
+
+  // Gói nạp Diamond (đang active). Diamond chỉ cộng sau webhook IAP + receipt verify.
+  async listIapPackages(): Promise<IapPackage[]> {
+    return this.db
+      .select()
+      .from(iapPackages)
+      .where(eq(iapPackages.isActive, true))
+      .orderBy(asc(iapPackages.priceVnd));
   }
 
   // Redeem ATOMIC: lock row → stock_sold<stock → trừ điểm → stock_sold++ → tạo gift item — §8.

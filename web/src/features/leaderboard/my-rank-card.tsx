@@ -1,30 +1,32 @@
-import { NeuCard } from '@/components/neu';
-import { formatNumber } from '@/lib/format';
 import { useMyRank } from './use-leaderboard';
 
-function RankRow({ label, type }: { label: string; type: 'TOP_VOTER' | 'TOP_EARNER' }) {
-  const { data } = useMyRank(type, 'WEEK');
+function RankTile({ label, rank, bg }: { label: string; rank: number | null; bg: string }) {
   return (
-    <div className="spread" style={{ padding: '6px 0' }}>
-      <span>{label} (tuần)</span>
-      <span className="mono" style={{ fontWeight: 700 }}>
-        {data?.rank ? `#${data.rank}` : '—'} · {formatNumber(data?.score ?? 0)}
-      </span>
+    <div style={{ background: bg, border: '3px solid var(--c-ink)', borderRadius: 14, boxShadow: '4px 4px 0 var(--c-ink)', padding: 18 }}>
+      <div style={{ fontSize: 13, fontWeight: 700 }}>{label}</div>
+      <div className="mono" style={{ fontWeight: 700, fontSize: 30, marginTop: 5 }}>{rank ? `#${rank}` : '—'}</div>
     </div>
   );
 }
 
 export function MyRankCard() {
+  const voter = useMyRank('TOP_VOTER', 'WEEK');
+  const earner = useMyRank('TOP_EARNER', 'WEEK');
   return (
-    <NeuCard>
-      <strong>🏅 Xếp hạng của tôi</strong>
-      <div style={{ marginTop: 8 }}>
-        <RankRow label="🗳️ Top Voter" type="TOP_VOTER" />
-        <RankRow label="💰 Top Earner" type="TOP_EARNER" />
+    <div>
+      <div className="row" style={{ gap: 12, marginBottom: 14 }}>
+        <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22 }}>🏅 Xếp hạng của tôi</span>
+        <span className="mono" style={{ fontSize: 11, color: '#888', background: 'var(--c-white)', border: '2px solid var(--c-ink)', borderRadius: 20, padding: '3px 10px' }}>
+          TUẦN NÀY
+        </span>
       </div>
-      <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>
-        Top Earner chỉ tính Gold cày (video/nhiệm vụ/offerwall).
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <RankTile label="🗳️ Top Voter" rank={voter.data?.rank ?? null} bg="#FFF4D6" />
+        <RankTile label="💰 Top Earner" rank={earner.data?.rank ?? null} bg="#E0EDFF" />
+      </div>
+      <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+        Top Earner chỉ tính Gold cày (video / nhiệm vụ / offerwall).
       </p>
-    </NeuCard>
+    </div>
   );
 }

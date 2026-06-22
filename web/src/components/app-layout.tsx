@@ -6,9 +6,9 @@ import { useBalance } from '@/features/wallet/use-wallet';
 import { NotificationBell } from '@/features/notification/notification-bell';
 
 const TABS = [
-  { to: '/', label: '🗳️ Vote', end: true },
-  { to: '/shop', label: '🛒 Shop', end: false },
-  { to: '/profile', label: '👤 Hồ sơ', end: false },
+  { to: '/', icon: '🗳️', label: 'Vote', end: true },
+  { to: '/shop', icon: '🛒', label: 'Shop', end: false },
+  { to: '/profile', icon: '👤', label: 'Hồ sơ', end: false },
 ];
 
 const navBtn = (active: boolean): React.CSSProperties => ({
@@ -38,6 +38,7 @@ export function AppLayout() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--c-cream)' }}>
       <header
+        className="app-header"
         style={{
           position: 'sticky',
           top: 0,
@@ -50,7 +51,7 @@ export function AppLayout() {
           padding: '0 24px',
         }}
       >
-        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 22, padding: 0 }}>
+        <div className="container app-header-inner" style={{ display: 'flex', alignItems: 'center', gap: 22, padding: 0 }}>
           <NavLink to="/" style={{ display: 'flex', alignItems: 'center', gap: 11, textDecoration: 'none', color: 'inherit' }}>
             <div
               style={{
@@ -70,13 +71,13 @@ export function AppLayout() {
             >
               FDV
             </div>
-            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22 }}>FandomVote</span>
+            <span className="app-logo-text" style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 22 }}>FandomVote</span>
           </NavLink>
 
-          <nav style={{ display: 'flex', gap: 9, flex: 1 }}>
+          <nav className="app-nav" style={{ display: 'flex', gap: 9, flex: 1 }}>
             {TABS.map((t) => (
               <NavLink key={t.to} to={t.to} end={t.end} style={({ isActive }) => navBtn(isActive)}>
-                {t.label}
+                {t.icon} {t.label}
               </NavLink>
             ))}
             {isAdmin && (
@@ -95,7 +96,7 @@ export function AppLayout() {
                   </span>
                 ))}
                 <NotificationBell />
-                <div style={stripeStyle(colorForId(user.id), 42)} title={user.displayName} />
+                <div className="app-avatar" style={stripeStyle(colorForId(user.id), 42)} title={user.displayName} />
               </>
             ) : (
               <NavLink to="/login" style={navBtn(false)}>
@@ -106,9 +107,30 @@ export function AppLayout() {
         </div>
       </header>
 
-      <main className="container" style={{ padding: '28px 24px 60px' }}>
+      <main className="container app-main" style={{ padding: '28px 24px 60px' }}>
         <Outlet />
       </main>
+
+      {/* Phone bottom tab bar — hiện <640px (CSS .tab-bar) */}
+      <nav className="tab-bar">
+        {TABS.map((t) => (
+          <NavLink
+            key={t.to}
+            to={t.to}
+            end={t.end}
+            className={({ isActive }) => `tab-btn ${isActive ? 'tab-btn--active' : ''}`}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1 }}>{t.icon}</span>
+            <span>{t.label}</span>
+          </NavLink>
+        ))}
+        {isAdmin && (
+          <NavLink to="/admin" className={({ isActive }) => `tab-btn ${isActive ? 'tab-btn--active' : ''}`}>
+            <span style={{ fontSize: 18, lineHeight: 1 }}>⚙️</span>
+            <span>Admin</span>
+          </NavLink>
+        )}
+      </nav>
     </div>
   );
 }

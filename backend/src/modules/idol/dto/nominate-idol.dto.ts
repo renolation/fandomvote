@@ -17,6 +17,11 @@ export class NominateIdolDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string;
+
+  @ApiPropertyOptional({ description: 'Mô tả ngắn về idol' })
+  @IsOptional()
+  @IsString()
+  bio?: string;
 }
 
 export class CheckDuplicateQueryDto {

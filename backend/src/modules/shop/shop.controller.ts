@@ -37,6 +37,20 @@ export class ShopController {
   }
 
   @Public()
+  @Get('offers')
+  @ApiOperation({ summary: 'Danh mục offer wall (kiếm Gold)' })
+  offers() {
+    return this.shop.listOffers();
+  }
+
+  @Public()
+  @Get('iap-packages')
+  @ApiOperation({ summary: 'Danh sách gói nạp Diamond (IAP)' })
+  iapPackages() {
+    return this.shop.listIapPackages();
+  }
+
+  @Public()
   @Get('daily-reward')
   @ApiOperation({ summary: 'Cấu hình daily reward' })
   dailyRewardConfig() {

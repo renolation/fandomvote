@@ -19,7 +19,9 @@ import { AdminShopPage } from '@/routes/(admin)/shop-page';
 import { AdminEventsPage } from '@/routes/(admin)/events-page';
 import { AdminLeaderboardPage } from '@/routes/(admin)/leaderboard-page';
 import { AdminAnalyticsPage } from '@/routes/(admin)/analytics-page';
-import { AdminStubPage } from '@/routes/(admin)/stub-page';
+import { AdminUsersPage } from '@/routes/(admin)/users-page';
+import { AdminOrdersPage } from '@/routes/(admin)/orders-page';
+import { AdminReconcilePage } from '@/routes/(admin)/reconcile-page';
 
 export function App() {
   const qc = useQueryClient();
@@ -58,9 +60,9 @@ export function App() {
           <Route path="leaderboards" element={<AdminLeaderboardPage />} />
           <Route path="shop" element={<AdminShopPage />} />
           <Route path="events" element={<AdminEventsPage />} />
-          <Route path="orders" element={<AdminStubPage title="Đơn hàng (Physical)" />} />
-          <Route path="reconcile" element={<AdminStubPage title="Đối soát" />} />
-          <Route path="users" element={<AdminStubPage title="Người dùng" />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="reconcile" element={<AdminReconcilePage />} />
+          <Route path="users" element={<AdminUsersPage />} />
         </Route>
       </Route>
 

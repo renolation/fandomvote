@@ -15,6 +15,7 @@ export * from './shop-deals.schema';
 export * from './shipping-addresses.schema';
 export * from './gift-wallet-items.schema';
 export * from './iap-packages.schema';
+export * from './offer-tasks.schema';
 export * from './daily-rewards-config.schema';
 export * from './point-events.schema';
 export * from './referrals.schema';
