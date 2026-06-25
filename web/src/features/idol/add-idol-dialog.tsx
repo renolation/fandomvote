@@ -37,7 +37,7 @@ export function AddIdolDialog({
         onChange={(e) => setSearch(e.target.value)}
         style={{ marginBottom: 12 }}
       />
-      <div className="col" style={{ maxHeight: 320, overflow: 'auto' }}>
+      <div className="col thin-scroll" style={{ height: 320, overflowY: 'auto' }}>
         {items.length === 0 && <span className="muted">Không có idol đã duyệt phù hợp.</span>}
         {items.map((idol) => (
           <div key={idol.id} className="spread">

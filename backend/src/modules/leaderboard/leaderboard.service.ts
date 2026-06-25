@@ -17,6 +17,12 @@ export interface BoardEntry {
   name: string;
   score: number;
 }
+export interface IdolBoardEntry {
+  rank: number;
+  idolId: string;
+  name: string;
+  score: number;
+}
 
 // User leaderboards — §17. Top Voter (Σ vote) / Top Earner (Σ Gold cày VIDEO/OFFERWALL/TASK).
 @Injectable()
@@ -52,6 +58,27 @@ export class LeaderboardService {
     return (res.rows as Array<{ user_id: string; name: string; score: string }>).map((r, i) => ({
       rank: i + 1,
       userId: r.user_id,
+      name: r.name,
+      score: Number(r.score),
+    }));
+  }
+
+  // TOP_IDOL — Σ vote_logs.amount theo idol trong kỳ, join vote_logs→campaign_idols→idols.
+  async getIdolBoard(period: LeaderboardPeriod, limit = 20): Promise<IdolBoardEntry[]> {
+    const { start, end } = periodRange(period);
+    const res = await this.db.execute(
+      sql`SELECT i.id AS idol_id, i.name AS name, COALESCE(SUM(v.amount),0) AS score
+        FROM vote_logs v
+        JOIN campaign_idols ci ON ci.id = v.campaign_idol_id
+        JOIN idols i ON i.id = ci.idol_id
+        WHERE v.is_reversal = false AND v.created_at >= ${start} AND v.created_at < ${end}
+        GROUP BY i.id, i.name
+        ORDER BY score DESC, i.id ASC
+        LIMIT ${limit}`,
+    );
+    return (res.rows as Array<{ idol_id: string; name: string; score: string }>).map((r, i) => ({
+      rank: i + 1,
+      idolId: r.idol_id,
       name: r.name,
       score: Number(r.score),
     }));

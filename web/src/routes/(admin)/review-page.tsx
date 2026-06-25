@@ -1,14 +1,16 @@
+import { DeleteButton } from '@/components/delete-button';
 import { NeuButton } from '@/components/neu';
 import { ErrorState, Loading } from '@/components/state-views';
 import { useToast } from '@/components/toast';
 import { colorForId, stripeStyle } from '@/lib/avatar';
-import { useApproveIdol, usePendingIdols } from '@/features/admin/use-admin';
+import { useApproveIdol, useDeleteAdmin, usePendingIdols } from '@/features/admin/use-admin';
 
 const COLS = '64px 1.4fr 1fr 1.4fr auto';
 
 export function AdminReviewPage() {
   const { data, isLoading, error, refetch } = usePendingIdols();
   const approve = useApproveIdol();
+  const del = useDeleteAdmin('idol');
   const toast = useToast();
   const rows = data?.items ?? [];
 
@@ -60,6 +62,11 @@ export function AdminReviewPage() {
                 <NeuButton size="sm" variant="pink" disabled={approve.isPending} onClick={() => act(idol.id, false, idol.name)}>
                   ✕ Từ chối
                 </NeuButton>
+                <DeleteButton
+                  label={`Xoá idol ${idol.name}`}
+                  successMessage={`Đã xoá ${idol.name}`}
+                  onConfirm={() => del.mutateAsync(idol.id)}
+                />
               </div>
             </div>
           ))}

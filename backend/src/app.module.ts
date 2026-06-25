@@ -14,6 +14,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { ReferralModule } from './modules/referral/referral.module';
 import { IdolModule } from './modules/idol/idol.module';
+import { FollowModule } from './modules/follow/follow.module';
 import { CampaignModule } from './modules/campaign/campaign.module';
 import { VoteModule } from './modules/vote/vote.module';
 import { ShopModule } from './modules/shop/shop.module';
@@ -24,6 +25,7 @@ import { LeaderboardModule } from './modules/leaderboard/leaderboard.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ScheduledModule } from './modules/scheduled/scheduled.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -41,6 +43,7 @@ import { ScheduledModule } from './modules/scheduled/scheduled.module';
     WalletModule,
     ReferralModule,
     IdolModule,
+    FollowModule,
     CampaignModule,
     VoteModule,
     ShopModule,
@@ -51,6 +54,7 @@ import { ScheduledModule } from './modules/scheduled/scheduled.module';
     AnalyticsModule,
     AdminModule,
     ScheduledModule,
+    UploadModule,
   ],
   providers: [
     // thứ tự: throttle → xác thực JWT (gắn user) → kiểm tra role

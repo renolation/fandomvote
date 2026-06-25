@@ -9,6 +9,7 @@ import { RegisterPage } from '@/features/auth/register-page';
 import { VotePage } from '@/routes/(user)/vote-page';
 import { CampaignDetailPage } from '@/routes/(user)/campaign-detail-page';
 import { ShopPage } from '@/routes/(user)/shop-page';
+import { EventsPage } from '@/routes/(user)/events-page';
 import { ProfilePage } from '@/routes/(user)/profile-page';
 import { NotificationsPage } from '@/routes/(user)/notifications-page';
 import { AdminDashboardPage } from '@/routes/(admin)/dashboard-page';
@@ -42,6 +43,7 @@ export function App() {
         <Route index element={<VotePage />} />
         <Route path="campaigns/:id" element={<CampaignDetailPage />} />
         <Route path="shop" element={<ShopPage />} />
+        <Route path="events" element={<EventsPage />} />
         {/* Cần auth: hồ sơ cá nhân + thông báo */}
         <Route element={<RequireAuth />}>
           <Route path="profile" element={<ProfilePage />} />

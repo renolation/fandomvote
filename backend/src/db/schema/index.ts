@@ -6,6 +6,7 @@ export * from './wallet-ledger.schema';
 export * from './green-daily-counter.schema';
 export * from './idempotency-keys.schema';
 export * from './idols.schema';
+export * from './idol-follows.schema';
 export * from './campaigns.schema';
 export * from './campaign-idols.schema';
 export * from './vote-logs.schema';

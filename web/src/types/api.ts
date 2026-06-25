@@ -195,6 +195,7 @@ export interface Idol {
   nameNormalized: string;
   aliases: string[] | null;
   avatarUrl: string | null;
+  bio: string | null;
   status: IdolStatus;
   nominatedBy: string | null;
   createdAt: string;
@@ -310,6 +311,10 @@ export interface PointEvent {
   bonusTotalUsed: number;
   isActive: boolean;
   createdAt: string;
+  bannerText?: string | null;
+  bannerImage?: string | null;
+  targetCurrency?: Currency;
+  appliesToSources?: LedgerSource[] | null;
 }
 
 export interface AppNotification {
@@ -329,6 +334,12 @@ export type LeaderboardPeriod = 'DAY' | 'WEEK' | 'MONTH';
 export interface BoardEntry {
   rank: number;
   userId: string;
+  name: string;
+  score: number;
+}
+export interface IdolBoardEntry {
+  rank: number;
+  idolId: string;
   name: string;
   score: number;
 }

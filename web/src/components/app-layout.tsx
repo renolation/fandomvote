@@ -8,6 +8,7 @@ import { NotificationBell } from '@/features/notification/notification-bell';
 const TABS = [
   { to: '/', icon: '🗳️', label: 'Vote', end: true },
   { to: '/shop', icon: '🛒', label: 'Shop', end: false },
+  { to: '/events', icon: '🎉', label: 'Sự kiện', end: false },
   { to: '/profile', icon: '👤', label: 'Hồ sơ', end: false },
 ];
 

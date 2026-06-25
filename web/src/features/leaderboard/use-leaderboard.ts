@@ -11,6 +11,14 @@ export function useBoard(type: LeaderboardType, period: LeaderboardPeriod) {
   });
 }
 
+export function useIdolBoard(period: LeaderboardPeriod) {
+  return useQuery({
+    queryKey: ['idol-board', period],
+    queryFn: () => leaderboardApi.idolBoard(period),
+    refetchInterval: 15_000,
+  });
+}
+
 export function useMyRank(type: LeaderboardType, period: LeaderboardPeriod) {
   const { isAuthed } = useAuth();
   return useQuery({

@@ -1,6 +1,7 @@
 import { api } from '@/lib/api-client';
 import type {
   BoardEntry,
+  IdolBoardEntry,
   LeaderboardPeriod,
   LeaderboardSnapshot,
   LeaderboardType,
@@ -10,6 +11,8 @@ import type {
 export const leaderboardApi = {
   board: (type: LeaderboardType, period: LeaderboardPeriod, limit = 20) =>
     api.get<BoardEntry[]>('/leaderboards', { params: { type, period, limit } }),
+  idolBoard: (period: LeaderboardPeriod) =>
+    api.get<IdolBoardEntry[]>('/leaderboards/idols', { params: { period } }),
   myRank: (type: LeaderboardType, period: LeaderboardPeriod) =>
     api.get<MyRank>('/leaderboards/me', { params: { type, period } }),
   // admin

@@ -25,6 +25,8 @@ export const BUSINESS_ERROR_STATUS: Record<string, HttpStatus> = {
   FORBIDDEN: HttpStatus.FORBIDDEN,
   NOT_FOUND: HttpStatus.NOT_FOUND,
   CONFLICT: HttpStatus.CONFLICT,
+  FILE_TOO_LARGE: HttpStatus.PAYLOAD_TOO_LARGE,
+  UPLOAD_NOT_CONFIGURED: HttpStatus.SERVICE_UNAVAILABLE,
 };
 
 export type BusinessErrorCode = keyof typeof BUSINESS_ERROR_STATUS | string;

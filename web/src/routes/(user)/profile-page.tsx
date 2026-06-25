@@ -12,6 +12,7 @@ import { VoteActivityList } from '@/features/vote/vote-activity-list';
 import { MyRankCard } from '@/features/leaderboard/my-rank-card';
 import { MyNominationsCard } from '@/features/idol/my-nominations-card';
 import { PlatformInfoCard } from '@/features/profile/platform-info-card';
+import { FollowedIdolsCard } from '@/features/follow/followed-idols-card';
 
 const head: React.CSSProperties = { fontFamily: 'var(--font-head)', fontWeight: 700 };
 
@@ -41,6 +42,8 @@ export function ProfilePage() {
             Đăng xuất
           </NeuButton>
         </NeuCard>
+
+        <FollowedIdolsCard />
 
         <NeuCard>
           <div className="spread" style={{ marginBottom: 13 }}>

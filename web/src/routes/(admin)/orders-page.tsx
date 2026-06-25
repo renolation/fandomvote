@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { DeleteButton } from '@/components/delete-button';
 import { NeuButton } from '@/components/neu';
 import { ErrorState, Loading } from '@/components/state-views';
 import { useToast } from '@/components/toast';
 import { colorForId, stripeStyle } from '@/lib/avatar';
 import { formatDateTime } from '@/lib/format';
 import type { AdminOrder } from '@/types/api';
-import { useOrderAction, useOrders } from '@/features/admin/use-admin';
+import { useDeleteAdmin, useOrderAction, useOrders } from '@/features/admin/use-admin';
 
 const COLS = '52px 1.5fr 1.1fr 200px 1.6fr auto';
 
@@ -89,6 +90,7 @@ export function AdminOrdersPage() {
   const [filter, setFilter] = useState<Filter>('ALL');
   const { data, isLoading, error, refetch } = useOrders(filter);
   const action = useOrderAction();
+  const del = useDeleteAdmin('gift');
   const toast = useToast();
 
   const rows = data ?? [];
@@ -197,6 +199,11 @@ export function AdminOrdersPage() {
                         Đã nhận
                       </NeuButton>
                     )}
+                    <DeleteButton
+                      label={`Xoá đơn quà "${o.dealTitle ?? o.id.slice(0, 8)}"`}
+                      successMessage="Đã xoá đơn quà"
+                      onConfirm={() => del.mutateAsync(o.id)}
+                    />
                   </div>
                 </div>
               ))

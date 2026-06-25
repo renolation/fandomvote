@@ -94,6 +94,42 @@ function invalidateCampaign(qc: ReturnType<typeof useQueryClient>, id: string) {
   qc.invalidateQueries({ queryKey: ['campaign-result', id] });
 }
 
+// ---- Hard-delete (xoá vĩnh viễn) ----
+// Map entity → (hàm xoá, queryKey list cần invalidate sau khi xoá).
+type DeleteEntity =
+  | 'user'
+  | 'campaign'
+  | 'idol'
+  | 'deal'
+  | 'offer'
+  | 'iapPackage'
+  | 'pointEvent'
+  | 'gift'
+  | 'notification'
+  | 'leaderboardSnapshot';
+
+const DELETE_CONFIG: Record<DeleteEntity, { fn: (id: string) => Promise<unknown>; invalidate: string }> = {
+  user: { fn: adminApi.deleteUser, invalidate: 'admin-users' },
+  campaign: { fn: adminApi.deleteCampaign, invalidate: 'campaigns' },
+  idol: { fn: adminApi.deleteIdol, invalidate: 'admin-pending-idols' },
+  deal: { fn: adminApi.deleteDeal, invalidate: 'deals' },
+  offer: { fn: adminApi.deleteOffer, invalidate: 'offers' },
+  iapPackage: { fn: adminApi.deleteIapPackage, invalidate: 'iap-packages' },
+  pointEvent: { fn: adminApi.deletePointEvent, invalidate: 'events' },
+  gift: { fn: adminApi.deleteGift, invalidate: 'admin-orders' },
+  notification: { fn: adminApi.deleteNotification, invalidate: 'notifications' },
+  leaderboardSnapshot: { fn: adminApi.deleteLeaderboardSnapshot, invalidate: 'lb-pending' },
+};
+
+export function useDeleteAdmin(entity: DeleteEntity) {
+  const qc = useQueryClient();
+  const cfg = DELETE_CONFIG[entity];
+  return useMutation({
+    mutationFn: (id: string) => cfg.fn(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [cfg.invalidate] }),
+  });
+}
+
 export function useCampaignAction() {
   const qc = useQueryClient();
   return useMutation<CampaignActionResult, Error, { id: string; action: 'open' | 'close' | 'resolve' | 'reverse' }>({

@@ -49,4 +49,21 @@ export const adminApi = {
   reconcileSummary: () => api.get<ReconcileSummary>('/admin/reconcile/summary'),
   ledger: (params: { source?: string; userId?: string; cursor?: string }) =>
     api.get<Paginated<AdminLedgerRow>>('/admin/ledger', { params }),
+
+  // Hard-delete (xoá vĩnh viễn, cascade) — chỉ DEV. Tất cả trả { deleted: true }.
+  deleteUser: (id: string) => api.post<DeleteResult>(`/admin/users/${id}/delete`),
+  deleteCampaign: (id: string) => api.post<DeleteResult>(`/admin/campaigns/${id}/delete`),
+  deleteIdol: (id: string) => api.post<DeleteResult>(`/admin/idols/${id}/delete`),
+  deleteDeal: (id: string) => api.post<DeleteResult>(`/admin/deals/${id}/delete`),
+  deleteOffer: (id: string) => api.post<DeleteResult>(`/admin/offers/${id}/delete`),
+  deleteIapPackage: (id: string) => api.post<DeleteResult>(`/admin/iap-packages/${id}/delete`),
+  deletePointEvent: (id: string) => api.post<DeleteResult>(`/admin/point-events/${id}/delete`),
+  deleteGift: (id: string) => api.post<DeleteResult>(`/admin/gifts/${id}/delete`),
+  deleteNotification: (id: string) => api.post<DeleteResult>(`/admin/notifications/${id}/delete`),
+  deleteLeaderboardSnapshot: (id: number | string) =>
+    api.post<DeleteResult>(`/admin/leaderboard-snapshots/${id}/delete`),
 };
+
+export interface DeleteResult {
+  deleted: boolean;
+}

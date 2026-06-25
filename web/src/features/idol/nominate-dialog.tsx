@@ -1,32 +1,45 @@
 import { useState } from 'react';
+import { ImageUpload } from '@/components/image-upload';
 import { NeuButton, NeuDialog, NeuField, NeuInput, NeuTextarea } from '@/components/neu';
 import { useToast } from '@/components/toast';
+import { uploadFile } from '@/lib/upload-api';
 import { useDuplicateCheck, useNominateIdol } from './use-idol';
 
 export function NominateDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false); // bao trùm cả upload + nominate
   const dup = useDuplicateCheck(name);
   const nominate = useNominateIdol();
   const toast = useToast();
   const isDup = dup.data?.duplicate ?? false;
   const isValid = name.trim().length > 1 && !isDup;
 
+  const reset = () => {
+    setName('');
+    setBio('');
+    setImageFile(null);
+  };
+
   const submit = async () => {
+    if (!isValid || busy) return;
+    setBusy(true);
     try {
-      await nominate.mutateAsync({
-        name: name.trim(),
-        bio: bio.trim() || undefined,
-        avatarUrl: avatarUrl.trim() || undefined,
-      });
+      // Upload ảnh CHỈ khi bấm gửi (không upload lúc chọn file).
+      let avatarUrl: string | undefined;
+      if (imageFile) {
+        const res = await uploadFile(imageFile);
+        avatarUrl = res.url;
+      }
+      await nominate.mutateAsync({ name: name.trim(), bio: bio.trim() || undefined, avatarUrl });
       toast.success('Đã gửi đề cử, chờ admin duyệt.');
-      setName('');
-      setBio('');
-      setAvatarUrl('');
+      reset();
       onClose();
     } catch (e) {
       toast.error(e);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -39,11 +52,11 @@ export function NominateDialog({ open, onClose }: { open: boolean; onClose: () =
         <NeuButton
           variant="green"
           style={{ width: '100%' }}
-          disabled={!isValid || nominate.isPending}
-          loading={nominate.isPending}
+          disabled={!isValid || busy}
+          loading={busy}
           onClick={submit}
         >
-          Gửi đề cử
+          {busy && imageFile ? 'Đang tải ảnh…' : 'Gửi đề cử'}
         </NeuButton>
       }
     >
@@ -60,8 +73,8 @@ export function NominateDialog({ open, onClose }: { open: boolean; onClose: () =
         <div style={{ color: '#22a24b', fontSize: 12, fontWeight: 700, marginTop: -6, marginBottom: 6 }}>✓ Tên hợp lệ</div>
       )}
 
-      <NeuField label="Ảnh idol (URL, không bắt buộc)">
-        <NeuInput value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…" />
+      <NeuField label="Ảnh idol (không bắt buộc)">
+        <ImageUpload file={imageFile} onChange={setImageFile} disabled={busy} />
       </NeuField>
 
       <NeuField label="Mô tả (không bắt buộc)">

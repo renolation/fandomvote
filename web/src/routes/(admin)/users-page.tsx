@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DeleteButton } from '@/components/delete-button';
 import { NeuButton } from '@/components/neu';
 import { ErrorState, Loading } from '@/components/state-views';
 import { useToast } from '@/components/toast';
@@ -6,7 +7,7 @@ import { colorForId, stripeStyle } from '@/lib/avatar';
 import { formatDateTime } from '@/lib/format';
 import { useDebounce } from '@/lib/use-debounce';
 import type { AdminUser } from '@/types/api';
-import { useAdminUsers, useFlagUser } from '@/features/admin/use-admin';
+import { useAdminUsers, useDeleteAdmin, useFlagUser } from '@/features/admin/use-admin';
 
 const COLS = '52px 1.6fr 90px 130px 120px auto';
 
@@ -30,6 +31,7 @@ export function AdminUsersPage() {
     flaggedOnly,
   );
   const flag = useFlagUser();
+  const del = useDeleteAdmin('user');
   const toast = useToast();
 
   const rows = data?.pages.flatMap((p) => p.items) ?? [];
@@ -90,9 +92,16 @@ export function AdminUsersPage() {
                 </span>
                 <VerifyCell u={u} />
                 <span className="mono" style={{ fontSize: 12 }}>{formatDateTime(u.createdAt).split(' ').slice(-1)[0] ?? formatDateTime(u.createdAt)}</span>
-                <NeuButton size="sm" variant={u.isFlagged ? 'green' : 'pink'} disabled={flag.isPending} onClick={() => act(u)}>
-                  {u.isFlagged ? 'Bỏ cờ' : 'Gắn cờ'}
-                </NeuButton>
+                <div className="row" style={{ gap: 6 }}>
+                  <NeuButton size="sm" variant={u.isFlagged ? 'green' : 'pink'} disabled={flag.isPending} onClick={() => act(u)}>
+                    {u.isFlagged ? 'Bỏ cờ' : 'Gắn cờ'}
+                  </NeuButton>
+                  <DeleteButton
+                    label={`Xoá user ${u.displayName}`}
+                    successMessage={`Đã xoá ${u.displayName}`}
+                    onConfirm={() => del.mutateAsync(u.id)}
+                  />
+                </div>
               </div>
             ))
           )}

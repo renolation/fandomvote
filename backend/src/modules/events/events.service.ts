@@ -17,6 +17,11 @@ export class EventsService {
     private readonly ledger: LedgerService,
   ) {}
 
+  // Tất cả point event (mọi trạng thái), mới nhất trước — trang Sự kiện công khai.
+  async listAll(): Promise<PointEvent[]> {
+    return this.db.select().from(pointEvents).orderBy(desc(pointEvents.startsAt));
+  }
+
   async getActive(type?: EventType): Promise<PointEvent[]> {
     const nowTs = new Date();
     const conds = [

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthUser, CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -11,6 +11,7 @@ import { UserService } from '../user/user.service';
 import { VoteService } from '../vote/vote.service';
 import { GiftWalletService } from '../shop/gift-wallet.service';
 import { ReconcileService } from '../reconcile/reconcile.service';
+import { AdminDeleteService } from './admin-delete.service';
 
 // Gom hành động admin + RolesGuard('ADMIN') — §3/§11. Mọi mutation ghi admin_audit_log trong service.
 @ApiTags('admin')
@@ -26,6 +27,7 @@ export class AdminController {
     private readonly user: UserService,
     private readonly giftWallet: GiftWalletService,
     private readonly reconcile: ReconcileService,
+    private readonly adminDelete: AdminDeleteService,
   ) {}
 
   @Get('users')
@@ -143,5 +145,70 @@ export class AdminController {
       cursor,
       limit: limit ? Number(limit) : undefined,
     });
+  }
+
+  // ===== Hard-delete (cascade) — DEV: admin xóa cứng mọi entity =====
+
+  @Post('users/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng user + toàn bộ dữ liệu liên quan' })
+  deleteUser(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
+    return this.adminDelete.deleteUser(admin.id, id);
+  }
+
+  @Post('campaigns/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng campaign + vote/biên lai/snapshot' })
+  deleteCampaign(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
+    return this.adminDelete.deleteCampaign(admin.id, id);
+  }
+
+  @Post('idols/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng idol + campaign_idol/vote/follow liên quan' })
+  deleteIdol(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
+    return this.adminDelete.deleteIdol(admin.id, id);
+  }
+
+  @Post('deals/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng shop deal + gift item đã đổi' })
+  deleteDeal(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
+    return this.adminDelete.deleteDeal(admin.id, id);
+  }
+
+  @Post('offers/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng offer task' })
+  deleteOffer(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
+    return this.adminDelete.deleteOffer(admin.id, id);
+  }
+
+  @Post('iap-packages/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng gói IAP' })
+  deleteIapPackage(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
+    return this.adminDelete.deleteIapPackage(admin.id, id);
+  }
+
+  @Post('point-events/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng sự kiện điểm' })
+  deletePointEvent(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
+    return this.adminDelete.deletePointEvent(admin.id, id);
+  }
+
+  @Post('gifts/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng quà trong ví' })
+  deleteGiftItem(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
+    return this.adminDelete.deleteGiftItem(admin.id, id);
+  }
+
+  @Post('notifications/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng thông báo' })
+  deleteNotification(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
+    return this.adminDelete.deleteNotification(admin.id, id);
+  }
+
+  @Post('leaderboard-snapshots/:id/delete')
+  @ApiOperation({ summary: 'Xóa cứng snapshot bảng xếp hạng' })
+  deleteLeaderboardSnapshot(
+    @CurrentUser() admin: AuthUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.adminDelete.deleteLeaderboardSnapshot(admin.id, id);
   }
 }

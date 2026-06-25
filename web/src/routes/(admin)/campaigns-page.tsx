@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { DeleteButton } from '@/components/delete-button';
 import { NeuButton, NeuPill } from '@/components/neu';
 import { EmptyState, ErrorState, Loading } from '@/components/state-views';
 import { useToast } from '@/components/toast';
@@ -6,7 +7,7 @@ import { colorForId } from '@/lib/avatar';
 import { formatNumber } from '@/lib/format';
 import type { Campaign, CampaignStatus } from '@/types/api';
 import { useCampaigns, useLeaderboard } from '@/features/campaign/use-campaign';
-import { useCampaignAction } from '@/features/admin/use-admin';
+import { useCampaignAction, useDeleteAdmin } from '@/features/admin/use-admin';
 
 const STATUS_COLOR: Partial<Record<CampaignStatus, string>> = {
   OPEN: 'var(--c-green)',
@@ -28,6 +29,7 @@ const stat: React.CSSProperties = { border: '2px solid var(--c-ink)', borderRadi
 function CampaignAdminCard({ campaign }: { campaign: Campaign }) {
   const { data: board } = useLeaderboard(campaign.id, false);
   const action = useCampaignAction();
+  const del = useDeleteAdmin('campaign');
   const toast = useToast();
   const raised = (board ?? []).reduce((s, e) => s + e.totalVotes, 0);
   const pct = campaign.starGoal > 0 ? Math.min(100, Math.round((raised / campaign.starGoal) * 100)) : 0;
@@ -89,6 +91,11 @@ function CampaignAdminCard({ campaign }: { campaign: Campaign }) {
           {campaign.status !== 'RESOLVED' && campaign.status !== 'ARCHIVED' && (
             <NeuButton size="sm" variant="pink" disabled={action.isPending} onClick={() => run('reverse')}>Hủy + hoàn vote</NeuButton>
           )}
+          <DeleteButton
+            label={`Xoá campaign "${campaign.title}"`}
+            successMessage="Đã xoá campaign"
+            onConfirm={() => del.mutateAsync(campaign.id)}
+          />
         </div>
       </div>
     </div>

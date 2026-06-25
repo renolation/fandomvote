@@ -1,8 +1,10 @@
+import { DeleteButton } from '@/components/delete-button';
 import { NeuButton } from '@/components/neu';
 import { ErrorState, Loading } from '@/components/state-views';
 import { useToast } from '@/components/toast';
 import { formatDateTime, formatNumber } from '@/lib/format';
 import type { LeaderboardSnapshot } from '@/types/api';
+import { useDeleteAdmin } from '@/features/admin/use-admin';
 import { usePendingRewards, useRewardAction } from '@/features/leaderboard/use-leaderboard';
 
 const COLS = '120px 90px 70px 1.4fr 110px 130px auto';
@@ -20,6 +22,7 @@ const STATUS_STYLE: Record<LeaderboardSnapshot['rewardStatus'], { bg: string; fg
 export function AdminLeaderboardPage() {
   const { data, isLoading, error, refetch } = usePendingRewards();
   const action = useRewardAction();
+  const del = useDeleteAdmin('leaderboardSnapshot');
   const toast = useToast();
   const rows = data ?? [];
 
@@ -81,6 +84,11 @@ export function AdminLeaderboardPage() {
                       Trao thưởng
                     </NeuButton>
                   )}
+                  <DeleteButton
+                    label={`Xoá snapshot #${s.rank} (${s.period})`}
+                    successMessage="Đã xoá snapshot"
+                    onConfirm={() => del.mutateAsync(String(s.id))}
+                  />
                 </div>
               </div>
             );

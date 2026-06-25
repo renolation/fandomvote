@@ -10,6 +10,7 @@ import {
   donationReceipts,
   giftWalletItems,
   iapPackages,
+  idolFollows,
   idols,
   leaderboardSnapshots,
   notifications,
@@ -441,7 +442,16 @@ async function seedScenarios(): Promise<void> {
     ])
     .onConflictDoNothing();
 
-  console.log('• seed kịch bản: 6 vote_log, 2 referral (1 REWARDED), 4 BXH PENDING, 5 daily_metrics, 1 địa chỉ + 4 đơn quà (CONFIRMED/SHIPPED/DELIVERED/USED), 1 idol REJECTED, 2 RESOLVED (A winner / C an ủi), +4 user (unverified + flagged)');
+  // 8) idol_follows — user demo theo dõi 2 idol (Vũ Cát Tường Lee, Trần Bảo Khôi)
+  await db
+    .insert(idolFollows)
+    .values([
+      { id: '00000000-0000-4000-8000-000000000971', userId: USER_ID, idolId: '00000000-0000-4000-8000-000000000011' },
+      { id: '00000000-0000-4000-8000-000000000972', userId: USER_ID, idolId: '00000000-0000-4000-8000-000000000013' },
+    ])
+    .onConflictDoNothing();
+
+  console.log('• seed kịch bản: 6 vote_log, 2 referral (1 REWARDED), 4 BXH PENDING, 5 daily_metrics, 1 địa chỉ + 4 đơn quà (CONFIRMED/SHIPPED/DELIVERED/USED), 1 idol REJECTED, 2 RESOLVED (A winner / C an ủi), +4 user (unverified + flagged), 2 idol follow');
 }
 
 async function main(): Promise<void> {
