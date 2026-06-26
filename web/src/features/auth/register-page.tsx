@@ -68,7 +68,7 @@ export function RegisterPage() {
             />
           </NeuField>
           <NeuField label="Mã mời (tuỳ chọn)">
-            <NeuInput value={form.referralCode} onChange={set('referralCode')} placeholder="User ID người giới thiệu" />
+            <NeuInput value={form.referralCode} onChange={set('referralCode')} placeholder="Username người giới thiệu" />
           </NeuField>
           <NeuButton type="submit" variant="green" loading={busy} style={{ width: '100%' }}>
             Tạo tài khoản

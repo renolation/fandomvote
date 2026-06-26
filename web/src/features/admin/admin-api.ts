@@ -10,6 +10,7 @@ import type {
   IdolStatus,
   Paginated,
   ReconcileSummary,
+  UpdateUserBody,
 } from '@/types/api';
 
 export interface ResolutionResult {
@@ -39,6 +40,8 @@ export const adminApi = {
     }),
   flagUser: (id: string) => api.post<AdminUser>(`/admin/users/${id}/flag`),
   unflagUser: (id: string) => api.post<AdminUser>(`/admin/users/${id}/unflag`),
+  updateUser: (id: string, body: UpdateUserBody) =>
+    api.post<AdminUser>(`/admin/users/${id}/update`, body),
 
   // Đơn hàng PHYSICAL — fulfilment.
   orders: (status?: string) => api.get<AdminOrder[]>('/admin/orders', { params: { status } }),

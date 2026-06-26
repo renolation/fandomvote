@@ -8,6 +8,7 @@ import { ResolutionService } from '../campaign/resolution.service';
 import { CreateCampaignDto } from '../campaign/dto/create-campaign.dto';
 import { IdolService } from '../idol/idol.service';
 import { UserService } from '../user/user.service';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { VoteService } from '../vote/vote.service';
 import { GiftWalletService } from '../shop/gift-wallet.service';
 import { ReconcileService } from '../reconcile/reconcile.service';
@@ -38,6 +39,16 @@ export class AdminController {
     @Query() q: PaginationQueryDto,
   ) {
     return this.user.listForAdmin({ ...q, search, flagged });
+  }
+
+  @Post('users/:id/update')
+  @ApiOperation({ summary: 'Sửa thông tin user (tên/fandom/role)' })
+  updateUser(
+    @CurrentUser() admin: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.user.update(admin.id, id, dto);
   }
 
   @Post('users/:id/flag')

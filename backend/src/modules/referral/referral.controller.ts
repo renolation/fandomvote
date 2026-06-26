@@ -10,7 +10,7 @@ export class ReferralController {
   constructor(private readonly referral: ReferralService) {}
 
   @Get('me')
-  @ApiOperation({ summary: 'Mã mời (=userId) + thống kê lượt mời' })
+  @ApiOperation({ summary: 'Mã mời (=username) + thống kê lượt mời' })
   me(@CurrentUser() user: AuthUser) {
     return this.referral.getStats(user.id);
   }

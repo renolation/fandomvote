@@ -77,6 +77,33 @@ export function CampaignBoard({ campaign }: { campaign: Campaign }) {
         </div>
       </div>
 
+      {/* Reward banner — chỉ hiện khi campaign có phần thưởng */}
+      {campaign.prize && (
+        <div
+          style={{
+            background: 'var(--c-yellow)',
+            border: '3px solid var(--c-ink)',
+            borderRadius: 16,
+            boxShadow: '5px 5px 0 var(--c-ink)',
+            padding: '18px 22px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            marginBottom: 24,
+          }}
+        >
+          <div style={{ fontSize: 34, flex: 'none' }}>🏆</div>
+          <div style={{ minWidth: 0 }}>
+            <div className="mono" style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', color: '#000' }}>
+              GIẢI THƯỞNG CAMPAIGN
+            </div>
+            <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 20, lineHeight: 1.25, marginTop: 4 }}>
+              {campaign.prize}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isLoading && <Loading />}
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
 

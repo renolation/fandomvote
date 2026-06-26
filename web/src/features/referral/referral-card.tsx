@@ -9,13 +9,13 @@ export function ReferralCard() {
 
   const copy = () =>
     navigator.clipboard.writeText(data.referralCode).then(
-      () => toast.success('Đã copy mã mời'),
+      () => toast.success('Đã copy username mời'),
       () => toast.error(new Error('Không copy được')),
     );
 
   return (
     <div style={{ background: '#3B82F6', border: '3px solid var(--c-ink)', borderRadius: 16, boxShadow: '5px 5px 0 var(--c-ink)', padding: 18, color: '#fff' }}>
-      <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>🔗 Mã mời của bạn</div>
+      <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>🔗 Username mời của bạn</div>
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
         <div className="mono" style={{ flex: 1, minWidth: 0, background: '#fff', color: '#000', border: '2px solid var(--c-ink)', borderRadius: 9, padding: '10px 12px', fontWeight: 700, fontSize: 17, letterSpacing: 1, wordBreak: 'break-all' }}>
           {data.referralCode}

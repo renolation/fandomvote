@@ -12,6 +12,7 @@ export function AdminCampaignCreatePage() {
     title: '',
     description: '',
     rulesContent: '',
+    prize: '',
     starGoal: 1000,
     donationPercent: 50,
     closeAt: '',
@@ -24,6 +25,7 @@ export function AdminCampaignCreatePage() {
         title: form.title,
         description: form.description || undefined,
         rulesContent: form.rulesContent || undefined,
+        prize: form.prize || undefined,
         starGoal: form.starGoal,
         donationRatioBps: Math.round(form.donationPercent * 100), // % → basis points
         closeAt: form.closeAt ? new Date(form.closeAt).toISOString() : undefined,
@@ -54,6 +56,13 @@ export function AdminCampaignCreatePage() {
               rows={4}
               value={form.rulesContent}
               onChange={(e) => setForm({ ...form, rulesContent: e.target.value })}
+            />
+          </NeuField>
+          <NeuField label="Phần thưởng (prize)">
+            <NeuInput
+              value={form.prize}
+              placeholder="VD: iPhone 16 Pro Max cho fan có công đầu"
+              onChange={(e) => setForm({ ...form, prize: e.target.value })}
             />
           </NeuField>
           <NeuField label="Mốc sao (star goal)">

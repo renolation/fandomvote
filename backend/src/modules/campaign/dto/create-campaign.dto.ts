@@ -17,6 +17,11 @@ export class CreateCampaignDto {
   @IsString()
   rulesContent?: string;
 
+  @ApiPropertyOptional({ description: 'Phần thưởng campaign (banner GIẢI THƯỞNG)' })
+  @IsOptional()
+  @IsString()
+  prize?: string;
+
   @ApiProperty({ description: 'Mốc sao (chốt ở DRAFT, không sửa sau OPEN)' })
   @IsInt()
   @Min(1)

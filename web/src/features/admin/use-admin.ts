@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Campaign, CreateCampaignBody } from '@/types/api';
+import type { Campaign, CreateCampaignBody, UpdateUserBody } from '@/types/api';
 import { adminApi, type ResolutionResult } from './admin-api';
 
 export function useAdminUsers(search: string, flaggedOnly: boolean) {
@@ -17,6 +17,14 @@ export function useFlagUser() {
   return useMutation({
     mutationFn: (v: { id: string; flag: boolean }) =>
       v.flag ? adminApi.flagUser(v.id) : adminApi.unflagUser(v.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  });
+}
+
+export function useUpdateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; body: UpdateUserBody }) => adminApi.updateUser(v.id, v.body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
   });
 }

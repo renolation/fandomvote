@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import * as argon2 from 'argon2';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import {
   campaignIdols,
   campaignSnapshots,
@@ -84,8 +84,8 @@ async function seedDemo(): Promise<void> {
   await db
     .insert(users)
     .values([
-      { id: ADMIN_ID, email: 'admin@fdv.vn', passwordHash: pwd, displayName: 'FDV Admin', role: 'ADMIN', emailVerifiedAt: now },
-      { id: USER_ID, email: 'user@fdv.vn', passwordHash: pwd, displayName: 'Trang Nguyễn', fandom: 'Tường Lee Fanclub', emailVerifiedAt: now },
+      { id: ADMIN_ID, email: 'admin@fdv.vn', username: 'admin', passwordHash: pwd, displayName: 'FDV Admin', role: 'ADMIN', emailVerifiedAt: now },
+      { id: USER_ID, email: 'user@fdv.vn', username: 'trang', passwordHash: pwd, displayName: 'Trang Nguyễn', fandom: 'Tường Lee Fanclub', emailVerifiedAt: now },
     ])
     .onConflictDoNothing();
 
@@ -124,6 +124,7 @@ async function seedDemo(): Promise<void> {
         'Mỗi sao vote trừ Green trước, hết Green mới trừ Gold.\nIdol đầu tiên đạt Star Goal kích hoạt resolution.\nKhông idol nào đạt mốc → Gold quy đổi ×0,5 vào quỹ từ thiện.\nGreen có hạn sử dụng — dùng trước khi hết hạn.',
       starGoal: 1_500_000,
       donationRatioBps: 5000,
+      prize: 'Billboard LED Times Square HCM 1 tuần + bộ ảnh concept',
       status: 'OPEN',
       openAt: now,
       closeAt,
@@ -170,6 +171,23 @@ async function seedDemo(): Promise<void> {
     })
     .onConflictDoNothing();
 
+  // Thêm point_events phủ mọi trạng thái: 2 đang diễn ra, 2 sắp tới, 2 đã qua
+  // (trang 🎉 Sự kiện hiển thị filter ongoing/upcoming/past)
+  await db
+    .insert(pointEvents)
+    .values([
+      // 2 ĐANG DIỄN RA (startsAt < now < endsAt, isActive true)
+      { id: '00000000-0000-4000-8000-0000000009b1', title: '×2 Gold cuối tuần', type: 'EARN_MULTIPLIER', targetCurrency: 'GOLD', multiplierBps: 20000, priority: 8, startsAt: new Date(now.getTime() - 2 * 86400000), endsAt: new Date(now.getTime() + 2 * 86400000), bannerText: 'Nhân đôi Gold mọi nhiệm vụ cuối tuần!', isActive: true },
+      { id: '00000000-0000-4000-8000-0000000009b2', title: 'Nạp Diamond +50%', type: 'TOPUP_MULTIPLIER', targetCurrency: 'DIAMOND', multiplierBps: 15000, priority: 7, startsAt: new Date(now.getTime() - 86400000), endsAt: new Date(now.getTime() + 4 * 86400000), bannerText: 'Nạp Diamond nhận thêm 50% giá trị.', isActive: true },
+      // 2 SẮP TỚI (startsAt > now)
+      { id: '00000000-0000-4000-8000-0000000009b3', title: '×3 Green ngày lễ', type: 'EARN_MULTIPLIER', targetCurrency: 'GREEN', multiplierBps: 30000, priority: 9, startsAt: new Date(now.getTime() + 5 * 86400000), endsAt: new Date(now.getTime() + 7 * 86400000), bannerText: 'Sắp tới: nhân ba Green dịp lễ!', isActive: true },
+      { id: '00000000-0000-4000-8000-0000000009b4', title: 'Nạp Diamond +100% Tết', type: 'TOPUP_MULTIPLIER', targetCurrency: 'DIAMOND', multiplierBps: 30000, priority: 9, startsAt: new Date(now.getTime() + 10 * 86400000), endsAt: new Date(now.getTime() + 14 * 86400000), bannerText: 'Tết về: nạp Diamond x2 giá trị!', isActive: true },
+      // 2 ĐÃ QUA (endsAt < now, isActive false)
+      { id: '00000000-0000-4000-8000-0000000009b5', title: '×2 Gold tháng trước', type: 'EARN_MULTIPLIER', targetCurrency: 'GOLD', multiplierBps: 20000, priority: 5, startsAt: new Date(now.getTime() - 40 * 86400000), endsAt: new Date(now.getTime() - 10 * 86400000), bannerText: 'Sự kiện đã kết thúc.', isActive: false },
+      { id: '00000000-0000-4000-8000-0000000009b6', title: 'Nạp Diamond +50% hè rồi', type: 'TOPUP_MULTIPLIER', targetCurrency: 'DIAMOND', multiplierBps: 15000, priority: 4, startsAt: new Date(now.getTime() - 30 * 86400000), endsAt: new Date(now.getTime() - 8 * 86400000), bannerText: 'Sự kiện đã kết thúc.', isActive: false },
+    ])
+    .onConflictDoNothing();
+
   // Offer wall (kiếm Gold) — danh mục; Gold cộng qua webhook offerwall postback
   await db
     .insert(offerTasks)
@@ -192,7 +210,7 @@ async function seedDemo(): Promise<void> {
     ])
     .onConflictDoNothing();
 
-  console.log('• seed demo: admin@fdv.vn + user@fdv.vn (password123), 5 idol, 1 campaign OPEN, 3 deal, 1 event, 4 offer, 4 iap');
+  console.log('• seed demo: admin@fdv.vn (@admin) + user@fdv.vn (@trang) (password123), 5 idol, 1 campaign OPEN (prize LED Times Square), 3 deal, 7 point_events (2 ongoing/2 upcoming/2 past + ×2 GOLD), 4 offer, 4 iap');
 }
 
 // ===== Ngữ cảnh mở rộng: nhiều campaign + idol PENDING + notification + ví quà =====
@@ -235,7 +253,7 @@ async function seedMore(): Promise<void> {
   await db
     .insert(campaigns)
     .values([
-      { id: CAMP_OPEN2, title: 'Giọng Hát Vàng', description: 'Tìm kiếm giọng ca vàng 2026.', rulesContent: 'Green trừ trước, Gold sau. Top 1 đạt goal → resolution.', starGoal: 1_200_000, donationRatioBps: 5000, status: 'OPEN', openAt: now, closeAt: d(20), createdBy: ADMIN_ID },
+      { id: CAMP_OPEN2, title: 'Giọng Hát Vàng', description: 'Tìm kiếm giọng ca vàng 2026.', rulesContent: 'Green trừ trước, Gold sau. Top 1 đạt goal → resolution.', starGoal: 1_200_000, donationRatioBps: 5000, prize: 'Suất biểu diễn mở màn liveshow + bộ ảnh concept', status: 'OPEN', openAt: now, closeAt: d(20), createdBy: ADMIN_ID },
       { id: CAMP_DRAFT, title: 'Idol Tân Binh Q3', description: 'Sắp mở — chưa gán idol.', starGoal: 2_000_000, donationRatioBps: 4000, status: 'DRAFT', createdBy: ADMIN_ID },
       { id: CAMP_CLOSED, title: 'Đại Nhạc Hội FDV', description: 'Đã đóng — chờ admin chạy resolution.', starGoal: 500_000, donationRatioBps: 5000, status: 'CLOSED', openAt: d(-10), closeAt: d(-1), closedAt: now, snapshottedAt: now, createdBy: ADMIN_ID },
       { id: CAMP_RESOLVED, title: 'Mùa Xuân 2025', description: 'Đã kết thúc — không đạt mốc, quỹ từ thiện.', starGoal: 3_000_000, donationRatioBps: 5000, status: 'RESOLVED', openAt: d(-40), closeAt: d(-10), closedAt: d(-10), snapshottedAt: d(-10), resolvedAt: d(-9), createdBy: ADMIN_ID },
@@ -292,7 +310,7 @@ async function seedMore(): Promise<void> {
     ])
     .onConflictDoNothing();
 
-  console.log('• seed mở rộng: +4 campaign (OPEN/DRAFT/CLOSED/RESOLVED), 3 idol PENDING, 4 idol APPROVED, 3 notification, 2 quà');
+  console.log('• seed mở rộng: +4 campaign (OPEN#2 prize liveshow/DRAFT/CLOSED/RESOLVED), 3 idol PENDING, 4 idol APPROVED, 3 notification, 2 quà');
 }
 
 // ===== Kịch bản đầy đủ (block 09xx): vote_logs, referral, BXH, analytics, đơn hàng, kết quả A/C =====
@@ -326,10 +344,10 @@ async function seedScenarios(): Promise<void> {
   await db
     .insert(users)
     .values([
-      { id: REFEREE_REWARDED_ID, email: 'referee1@fdv.vn', passwordHash: pwd, displayName: 'Bạn Mời A', emailVerifiedAt: d(-6) },
-      { id: REFEREE_PENDING_ID, email: 'referee2@fdv.vn', passwordHash: pwd, displayName: 'Bạn Mời B', emailVerifiedAt: d(-2) },
-      { id: UNVERIFIED_USER_ID, email: 'unverified@fdv.vn', passwordHash: pwd, displayName: 'Chưa Xác Thực' }, // emailVerifiedAt null
-      { id: FLAGGED_USER_ID, email: 'flagged@fdv.vn', passwordHash: pwd, displayName: 'Tài Khoản Gắn Cờ', emailVerifiedAt: d(-3), isFlagged: true },
+      { id: REFEREE_REWARDED_ID, email: 'referee1@fdv.vn', username: 'referee1', passwordHash: pwd, displayName: 'Bạn Mời A', emailVerifiedAt: d(-6) },
+      { id: REFEREE_PENDING_ID, email: 'referee2@fdv.vn', username: 'referee2', passwordHash: pwd, displayName: 'Bạn Mời B', emailVerifiedAt: d(-2) },
+      { id: UNVERIFIED_USER_ID, email: 'unverified@fdv.vn', username: 'chuaxacthuc', passwordHash: pwd, displayName: 'Chưa Xác Thực' }, // emailVerifiedAt null
+      { id: FLAGGED_USER_ID, email: 'flagged@fdv.vn', username: 'flagged', passwordHash: pwd, displayName: 'Tài Khoản Gắn Cờ', emailVerifiedAt: d(-3), isFlagged: true },
     ])
     .onConflictDoNothing();
 
@@ -451,7 +469,32 @@ async function seedScenarios(): Promise<void> {
     ])
     .onConflictDoNothing();
 
-  console.log('• seed kịch bản: 6 vote_log, 2 referral (1 REWARDED), 4 BXH PENDING, 5 daily_metrics, 1 địa chỉ + 4 đơn quà (CONFIRMED/SHIPPED/DELIVERED/USED), 1 idol REJECTED, 2 RESOLVED (A winner / C an ủi), +4 user (unverified + flagged), 2 idol follow');
+  console.log('• seed kịch bản: 6 vote_log, 2 referral (1 REWARDED), 4 BXH PENDING, 5 daily_metrics, 1 địa chỉ + 4 đơn quà (CONFIRMED/SHIPPED/DELIVERED/USED), 1 idol REJECTED, 2 RESOLVED (A winner / C an ủi), +4 user (@referee1/@referee2/@chuaxacthuc/@flagged), 2 idol follow');
+}
+
+// Backfill cho hàng đã seed trước khi có cột username/prize (khi seedDemo/seedScenarios bị guard bỏ qua).
+// Chỉ ghi khi cột còn NULL → an toàn chạy lại, không đè giá trị do người dùng đặt.
+const USERNAME_BACKFILL: Array<{ id: string; username: string }> = [
+  { id: ADMIN_ID, username: 'admin' },
+  { id: USER_ID, username: 'trang' },
+  { id: REFEREE_REWARDED_ID, username: 'referee1' },
+  { id: REFEREE_PENDING_ID, username: 'referee2' },
+  { id: UNVERIFIED_USER_ID, username: 'chuaxacthuc' },
+  { id: FLAGGED_USER_ID, username: 'flagged' },
+];
+const PRIZE_BACKFILL: Array<{ id: string; prize: string }> = [
+  { id: CAMPAIGN_ID, prize: 'Billboard LED Times Square HCM 1 tuần + bộ ảnh concept' },
+  { id: CAMP_OPEN2, prize: 'Suất biểu diễn mở màn liveshow + bộ ảnh concept' },
+];
+
+async function backfillUsernamesAndPrize(): Promise<void> {
+  for (const u of USERNAME_BACKFILL) {
+    await db.update(users).set({ username: u.username }).where(and(eq(users.id, u.id), isNull(users.username)));
+  }
+  for (const c of PRIZE_BACKFILL) {
+    await db.update(campaigns).set({ prize: c.prize }).where(and(eq(campaigns.id, c.id), isNull(campaigns.prize)));
+  }
+  console.log('• backfill: username (6 user) + prize (2 campaign OPEN) khi NULL');
 }
 
 async function main(): Promise<void> {
@@ -459,6 +502,7 @@ async function main(): Promise<void> {
   await seedDemo();
   await seedMore();
   await seedScenarios();
+  await backfillUsernamesAndPrize();
   console.log('✓ seed hoàn tất');
   await pool.end();
 }

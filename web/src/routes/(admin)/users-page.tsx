@@ -7,6 +7,7 @@ import { colorForId, stripeStyle } from '@/lib/avatar';
 import { formatDateTime } from '@/lib/format';
 import { useDebounce } from '@/lib/use-debounce';
 import type { AdminUser } from '@/types/api';
+import { EditUserDialog } from '@/features/admin/edit-user-dialog';
 import { useAdminUsers, useDeleteAdmin, useFlagUser } from '@/features/admin/use-admin';
 
 const COLS = '52px 1.6fr 90px 130px 120px auto';
@@ -33,6 +34,7 @@ export function AdminUsersPage() {
   const flag = useFlagUser();
   const del = useDeleteAdmin('user');
   const toast = useToast();
+  const [editing, setEditing] = useState<AdminUser | null>(null);
 
   const rows = data?.pages.flatMap((p) => p.items) ?? [];
 
@@ -93,6 +95,9 @@ export function AdminUsersPage() {
                 <VerifyCell u={u} />
                 <span className="mono" style={{ fontSize: 12 }}>{formatDateTime(u.createdAt).split(' ').slice(-1)[0] ?? formatDateTime(u.createdAt)}</span>
                 <div className="row" style={{ gap: 6 }}>
+                  <NeuButton size="sm" variant="blue" onClick={() => setEditing(u)}>
+                    ✏️ Sửa
+                  </NeuButton>
                   <NeuButton size="sm" variant={u.isFlagged ? 'green' : 'pink'} disabled={flag.isPending} onClick={() => act(u)}>
                     {u.isFlagged ? 'Bỏ cờ' : 'Gắn cờ'}
                   </NeuButton>
@@ -115,6 +120,8 @@ export function AdminUsersPage() {
           )}
         </div>
       )}
+
+      <EditUserDialog user={editing} onClose={() => setEditing(null)} />
     </div>
   );
 }

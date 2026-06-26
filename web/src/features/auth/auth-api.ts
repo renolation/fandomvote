@@ -5,6 +5,7 @@ import type {
   GoogleAuthBody,
   LoginBody,
   RegisterBody,
+  UpdateProfileBody,
   VerificationChannel,
 } from '@/types/api';
 
@@ -13,6 +14,7 @@ export const authApi = {
   login: (body: LoginBody) => api.post<AuthResult>('/auth/login', body),
   google: (body: GoogleAuthBody) => api.post<AuthResult>('/auth/google', body),
   me: () => api.get<AuthUser>('/auth/me'),
+  updateProfile: (body: UpdateProfileBody) => api.post<AuthUser>('/auth/profile', body),
   logout: (refreshToken: string) => api.post<{ success: true }>('/auth/logout', { refreshToken }),
   requestVerify: (channel: VerificationChannel) =>
     api.post<{ sent: true }>('/auth/verify/request', { channel }),

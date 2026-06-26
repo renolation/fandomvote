@@ -8,6 +8,7 @@ export const campaigns = pgTable('campaigns', {
   title: text('title').notNull(),
   description: text('description'),
   rulesContent: text('rules_content'), // HTML/markdown — nút "Thể lệ"
+  prize: text('prize'), // phần thưởng campaign (banner vàng "GIẢI THƯỞNG")
   starGoal: bigint('star_goal', { mode: 'number' }).notNull(),
   donationRatioBps: integer('donation_ratio_bps').notNull().default(5000),
   rewardConfig: jsonb('reward_config'), // cấu hình thưởng (Vote LED / kịch bản A…)

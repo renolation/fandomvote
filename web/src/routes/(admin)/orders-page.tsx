@@ -8,7 +8,7 @@ import { formatDateTime } from '@/lib/format';
 import type { AdminOrder } from '@/types/api';
 import { useDeleteAdmin, useOrderAction, useOrders } from '@/features/admin/use-admin';
 
-const COLS = '52px 1.5fr 1.1fr 200px 1.6fr auto';
+const COLS = '48px 1.4fr 1fr 230px 1.5fr 150px';
 
 // Bộ lọc trạng thái — ALL = tất cả item PHYSICAL.
 const FILTERS = ['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED'] as const;
@@ -141,7 +141,7 @@ export function AdminOrdersPage() {
                 fontWeight: 700,
                 fontSize: 11,
                 color: '#555',
-                minWidth: 880,
+                minWidth: 1040,
               }}
             >
               <span>ẢNH</span>
@@ -167,7 +167,7 @@ export function AdminOrdersPage() {
                     padding: '13px 20px',
                     borderBottom: '2px solid #efe9dc',
                     alignItems: 'center',
-                    minWidth: 880,
+                    minWidth: 1040,
                   }}
                 >
                   <div style={stripeStyle(colorForId(o.user.id), 40)} />
@@ -188,7 +188,7 @@ export function AdminOrdersPage() {
                   </div>
                   <ShippingTracker status={o.status} />
                   <AddressCell address={o.address} />
-                  <div className="row">
+                  <div className="row" style={{ gap: 6, flexWrap: 'nowrap' }}>
                     {o.status === 'CONFIRMED' && (
                       <NeuButton size="sm" variant="blue" disabled={action.isPending} onClick={() => act(o, 'ship')}>
                         Giao hàng

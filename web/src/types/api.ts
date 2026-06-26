@@ -53,6 +53,7 @@ export interface AuthUser {
   id: string;
   email: string | null;
   phone: string | null;
+  username: string | null;
   authProvider: AuthProvider;
   googleSub: string | null;
   displayName: string;
@@ -127,6 +128,7 @@ export interface Campaign {
   title: string;
   description: string | null;
   rulesContent: string | null;
+  prize: string | null;
   starGoal: number;
   donationRatioBps: number;
   status: CampaignStatus;
@@ -455,6 +457,7 @@ export interface AdminUser {
   id: string;
   email: string | null;
   phone: string | null;
+  username: string | null;
   displayName: string;
   fandom: string | null;
   avatarUrl: string | null;
@@ -502,10 +505,21 @@ export interface CreateCampaignBody {
   title: string;
   description?: string;
   rulesContent?: string;
+  prize?: string;
   starGoal: number;
   donationRatioBps?: number;
   openAt?: string;
   closeAt?: string;
+}
+export interface UpdateProfileBody {
+  avatarUrl?: string;
+  displayName?: string;
+  fandom?: string;
+}
+export interface UpdateUserBody {
+  displayName?: string;
+  fandom?: string;
+  role?: Role;
 }
 export interface CreateAddressBody {
   recipient: string;

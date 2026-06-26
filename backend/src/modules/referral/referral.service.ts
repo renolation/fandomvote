@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 import { and, count, eq, sql } from 'drizzle-orm';
 import { Database, DRIZZLE } from '../../db/drizzle.provider';
 import { DbOrTx } from '../../db/types';
@@ -22,6 +23,25 @@ export class ReferralService {
     private readonly ledger: LedgerService,
     private readonly config: PlatformConfigService,
   ) {}
+
+  // Mã mời người dùng nhập = username. Resolve về userId của referrer.
+  // Backward-compat: nếu code khớp 1 user.id (mã cũ = UUID) thì chấp nhận luôn.
+  async resolveReferrerId(tx: DbOrTx, code: string): Promise<string> {
+    const byUsername = await tx
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.username, code))
+      .limit(1);
+    if (byUsername.length > 0) return byUsername[0].id;
+
+    // users.id là cột uuid — chỉ query khi code đúng định dạng UUID để tránh lỗi 22P02.
+    if (isUUID(code)) {
+      const byId = await tx.select({ id: users.id }).from(users).where(eq(users.id, code)).limit(1);
+      if (byId.length > 0) return byId[0].id;
+    }
+
+    throw new BusinessException('NOT_FOUND', 'Mã mời không tồn tại');
+  }
 
   // Gọi trong transaction register. Chống self-referral + referrer tồn tại + 1 referee/record.
   async createPendingReferral(
@@ -88,6 +108,11 @@ export class ReferralService {
   }
 
   async getStats(userId: string) {
+    const u = await this.db
+      .select({ username: users.username })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
     const total = await this.db
       .select({ c: count() })
       .from(referrals)
@@ -97,7 +122,7 @@ export class ReferralService {
       .from(referrals)
       .where(and(eq(referrals.referrerId, userId), eq(referrals.status, 'REWARDED')));
     return {
-      referralCode: userId, // mã mời = userId
+      referralCode: u[0]?.username ?? userId, // mã mời = username (fallback userId nếu chưa có)
       totalInvited: Number(total[0].c),
       totalRewarded: Number(rewarded[0].c),
     };

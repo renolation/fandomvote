@@ -70,6 +70,25 @@ export class UserService {
     return { items, nextCursor: hasMore ? items[items.length - 1].id : null };
   }
 
+  // Admin: sửa thông tin user (tên/fandom/role). Chỉ ghi field defined. Audit cùng transaction.
+  async update(
+    adminId: string,
+    userId: string,
+    dto: { displayName?: string; fandom?: string; role?: 'USER' | 'ADMIN' },
+  ): Promise<AdminUserRow> {
+    return this.db.transaction(async (tx) => {
+      const patch: Partial<typeof users.$inferInsert> = { updatedAt: new Date() };
+      if (dto.displayName !== undefined) patch.displayName = dto.displayName;
+      if (dto.fandom !== undefined) patch.fandom = dto.fandom;
+      if (dto.role !== undefined) patch.role = dto.role;
+
+      const rows = await tx.update(users).set(patch).where(eq(users.id, userId)).returning(adminCols);
+      if (rows.length === 0) throw new BusinessException('NOT_FOUND', 'User không tồn tại');
+      await this.audit.log(tx, adminId, 'user.update', 'user', userId);
+      return rows[0];
+    });
+  }
+
   // Admin: gắn/bỏ cờ gian lận. Ghi audit log trong cùng transaction.
   async setFlagged(adminId: string, userId: string, flagged: boolean): Promise<AdminUserRow> {
     return this.db.transaction(async (tx) => {

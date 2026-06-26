@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { VerificationService } from './verification.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
   ConfirmVerificationDto,
   GoogleAuthDto,
@@ -66,6 +67,13 @@ export class AuthController {
   @ApiOperation({ summary: 'Thông tin user hiện tại' })
   me(@CurrentUser() user: AuthUser) {
     return this.auth.getProfile(user.id);
+  }
+
+  @ApiBearerAuth()
+  @Post('profile')
+  @ApiOperation({ summary: 'Cập nhật hồ sơ (avatar/tên/fandom)' })
+  updateProfile(@CurrentUser() user: AuthUser, @Body() dto: UpdateProfileDto) {
+    return this.auth.updateProfile(user.id, dto);
   }
 
   @ApiBearerAuth()

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AvatarUploadDialog } from '@/components/avatar-upload-dialog';
 import { NeuButton, NeuCard } from '@/components/neu';
 import { colorForId, stripeStyle } from '@/lib/avatar';
 import { useAuth } from '@/features/auth/auth-context';
@@ -20,17 +21,37 @@ export function ProfilePage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [convertOpen, setConvertOpen] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
 
   return (
     <div className="split-360">
       {/* Cột trái — sticky trên desktop */}
       <div className="col" style={{ gap: 18, position: 'sticky', top: 98 }}>
         <NeuCard style={{ textAlign: 'center' }}>
-          <div style={{ margin: '0 auto', ...stripeStyle(colorForId(user?.id ?? 'x'), 84) }} />
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.displayName}
+              style={{
+                width: 84,
+                height: 84,
+                margin: '0 auto',
+                display: 'block',
+                objectFit: 'cover',
+                border: '3px solid var(--c-ink)',
+                borderRadius: 14,
+              }}
+            />
+          ) : (
+            <div style={{ margin: '0 auto', ...stripeStyle(colorForId(user?.id ?? 'x'), 84) }} />
+          )}
           <div style={{ ...head, fontSize: 21, marginTop: 12 }}>{user?.displayName}</div>
           <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
             Fandom: <strong>{user?.fandom ?? 'Fan'}</strong>
           </div>
+          <NeuButton size="sm" variant="ghost" style={{ marginTop: 10 }} onClick={() => setAvatarOpen(true)}>
+            📷 Đổi ảnh
+          </NeuButton>
           <NeuButton
             variant="pink"
             style={{ width: '100%', marginTop: 14 }}
@@ -77,6 +98,7 @@ export function ProfilePage() {
       </div>
 
       <ConvertDiamondDialog open={convertOpen} onClose={() => setConvertOpen(false)} />
+      <AvatarUploadDialog open={avatarOpen} onClose={() => setAvatarOpen(false)} />
     </div>
   );
 }

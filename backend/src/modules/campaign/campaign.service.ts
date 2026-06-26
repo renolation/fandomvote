@@ -28,6 +28,7 @@ export class CampaignService {
         title: dto.title,
         description: dto.description,
         rulesContent: dto.rulesContent,
+        prize: dto.prize,
         starGoal: dto.starGoal,
         donationRatioBps: dto.donationRatioBps ?? 5000,
         openAt: dto.openAt ? new Date(dto.openAt) : null,
