@@ -5,7 +5,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { CampaignService } from '../campaign/campaign.service';
 import { ResolutionService } from '../campaign/resolution.service';
-import { CreateCampaignDto } from '../campaign/dto/create-campaign.dto';
+import { CreateCampaignDto, UpdateCampaignDto } from '../campaign/dto/create-campaign.dto';
 import { IdolService } from '../idol/idol.service';
 import { UserService } from '../user/user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -88,6 +88,12 @@ export class AdminController {
   @ApiOperation({ summary: 'Tạo campaign (DRAFT)' })
   createCampaign(@CurrentUser() admin: AuthUser, @Body() dto: CreateCampaignDto) {
     return this.campaign.create(admin.id, dto);
+  }
+
+  @Post('campaigns/:id/update')
+  @ApiOperation({ summary: 'Sửa campaign (mọi trạng thái — DEV)' })
+  updateCampaign(@CurrentUser() admin: AuthUser, @Param('id') id: string, @Body() dto: UpdateCampaignDto) {
+    return this.campaign.update(admin.id, id, dto);
   }
 
   @Post('campaigns/:id/open')

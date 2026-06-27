@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DeleteButton } from '@/components/delete-button';
+import { CampaignEditDialog } from '@/features/admin/campaign-edit-dialog';
 import { NeuButton, NeuPill } from '@/components/neu';
 import { EmptyState, ErrorState, Loading } from '@/components/state-views';
 import { useToast } from '@/components/toast';
@@ -31,6 +33,7 @@ function CampaignAdminCard({ campaign }: { campaign: Campaign }) {
   const action = useCampaignAction();
   const del = useDeleteAdmin('campaign');
   const toast = useToast();
+  const [editOpen, setEditOpen] = useState(false);
   const raised = (board ?? []).reduce((s, e) => s + e.totalVotes, 0);
   const pct = campaign.starGoal > 0 ? Math.min(100, Math.round((raised / campaign.starGoal) * 100)) : 0;
 
@@ -79,6 +82,7 @@ function CampaignAdminCard({ campaign }: { campaign: Campaign }) {
         </div>
 
         <div className="row" style={{ marginTop: 16, flexWrap: 'wrap' }}>
+          <NeuButton size="sm" variant="ghost" onClick={() => setEditOpen(true)}>✏️ Sửa</NeuButton>
           {campaign.status === 'DRAFT' && (
             <NeuButton size="sm" variant="green" disabled={action.isPending} onClick={() => run('open')}>Mở</NeuButton>
           )}
@@ -98,6 +102,7 @@ function CampaignAdminCard({ campaign }: { campaign: Campaign }) {
           />
         </div>
       </div>
+      <CampaignEditDialog campaign={campaign} open={editOpen} onClose={() => setEditOpen(false)} />
     </div>
   );
 }

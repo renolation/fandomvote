@@ -20,6 +20,7 @@ export const shopApi = {
       idempotencyKey: newIdempotencyKey(),
     }),
   dailyRewardConfig: () => api.get<DailyRewardConfig[]>('/shop/daily-reward'),
+  dailyRewardStatus: () => api.get<{ claimedToday: boolean }>('/shop/daily-reward/status'),
   claimDaily: () => api.post<{ greenAwarded: number }>('/shop/daily-reward/claim'),
   gifts: () => api.get<GiftWalletItem[]>('/shop/gifts'),
   useGift: (id: string) => api.post<GiftWalletItem>(`/shop/gifts/${id}/use`),

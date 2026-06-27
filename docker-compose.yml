@@ -1,42 +1,30 @@
-# FDV stack: backend (NestJS) + web (React/nginx). DB dùng ngoài (Neon/RDS…) qua DATABASE_URL.
-# Build:  docker compose build
-# Run:    DATABASE_URL=postgres://... docker compose up -d
-# Web → http://localhost:8080 · API → http://localhost:3000/api/v1 (Swagger /api/docs)
+# FDV stack: backend (NestJS) + web (React/nginx). DB ngoài qua DATABASE_URL.
+# Deploy (VPS): copy .env.local cạnh file này rồi:
+#   docker compose pull && docker compose up -d
+# Web → http://<host>:8080 · API → http://<host>:8001/api/v1 (Swagger /api/docs)
 services:
   backend:
     image: renolation/fdv-backend:latest
-    build:
-      context: ./backend
     container_name: fdv-backend
+    # Toàn bộ secret (DATABASE_URL, JWT_*, R2_*, webhook, PORT…) đọc từ .env.local.
+    env_file:
+      - .env.local
     environment:
+      # Đè cứng cho container production (ghi đè giá trị trùng trong .env.local).
       NODE_ENV: production
-      PORT: '3000'
-      TIMEZONE: Asia/Ho_Chi_Minh
-      # DB ngoài — bắt buộc (Neon dùng endpoint pooled + sslmode=require)
-      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required (vd Neon pooled connection string)}
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change-me-access-secret-min-32-chars-long}
-      JWT_ACCESS_TTL: '1800'
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-refresh-secret-min-32-chars-long}
-      JWT_REFRESH_TTL: '2592000'
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      IAP_WEBHOOK_SECRET: ${IAP_WEBHOOK_SECRET:-change-me-iap-webhook-secret}
-      OFFERWALL_POSTBACK_SECRET: ${OFFERWALL_POSTBACK_SECRET:-change-me-offerwall-secret}
-      # migrate luôn chạy lúc start; seed chỉ khi =true (idempotent)
-      SEED_ON_START: ${SEED_ON_START:-false}
+      # migrate luôn chạy lúc start; seed chỉ khi SEED_ON_START=true (idempotent)
     ports:
-      - '3000:3000'
+      - '8001:8001'
+    restart: unless-stopped
 
   web:
     image: renolation/fdv-web:latest
-    build:
-      context: ./web
     container_name: fdv-web
-    environment:
-      # Chế độ cùng origin: để API_BASE_URL rỗng → web gọi /api, nginx proxy sang BACKEND_ORIGIN.
-      BACKEND_ORIGIN: ${BACKEND_ORIGIN:-http://backend:3000}
-      # Chế độ 2 nơi khác nhau: set API_BASE_URL = URL backend public → browser gọi trực tiếp (backend phải bật CORS).
-      API_BASE_URL: ${API_BASE_URL:-}
+    # web chỉ dùng BACKEND_ORIGIN + API_BASE_URL; các biến khác trong .env.local bị bỏ qua.
+    env_file:
+      - .env.local
     depends_on:
       - backend
     ports:
       - '8080:80'
+    restart: unless-stopped

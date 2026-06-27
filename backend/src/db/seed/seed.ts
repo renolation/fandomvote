@@ -497,11 +497,31 @@ async function backfillUsernamesAndPrize(): Promise<void> {
   console.log('• backfill: username (6 user) + prize (2 campaign OPEN) khi NULL');
 }
 
+// Campaign "Sắp tới" = DRAFT + open_at tương lai (trang Sự kiện lọc theo điều kiện này).
+// Idempotent + KHÔNG guard để `db:seed` luôn bổ sung kể cả DB đã seed trước đó.
+async function seedUpcomingCampaigns(): Promise<void> {
+  const now = new Date();
+  const d = (days: number) => new Date(now.getTime() + days * 86400000);
+  await db
+    .insert(campaigns)
+    .values([
+      { id: '00000000-0000-4000-8000-0000000009c1', title: 'Giọng Ca Mùa Thu 2026', description: 'Sắp diễn ra — bình chọn giọng ca mùa thu.', starGoal: 1_500_000, donationRatioBps: 5000, prize: 'Quay MV độc quyền + suất diễn fanmeeting', status: 'DRAFT', openAt: d(3), createdBy: ADMIN_ID },
+      { id: '00000000-0000-4000-8000-0000000009c2', title: 'Đại Hội Fandom Cuối Năm', description: 'Sắp diễn ra — sự kiện lớn cuối năm.', starGoal: 3_000_000, donationRatioBps: 5000, prize: 'Billboard LED Hà Nội 1 tuần', status: 'DRAFT', openAt: d(10), createdBy: ADMIN_ID },
+      { id: '00000000-0000-4000-8000-0000000009c3', title: 'Tân Binh Tỏa Sáng Q4', description: 'Sắp diễn ra — sân chơi cho tân binh.', starGoal: 800_000, donationRatioBps: 4000, prize: 'Hợp đồng đào tạo 6 tháng', status: 'DRAFT', openAt: d(14), createdBy: ADMIN_ID },
+      { id: '00000000-0000-4000-8000-0000000009c4', title: 'Cúp Bình Chọn Mùa Xuân 2027', description: 'Sắp diễn ra — khởi tranh mùa giải mới.', starGoal: 2_000_000, donationRatioBps: 5000, prize: 'Bộ ảnh concept + cặp vé concert', status: 'DRAFT', openAt: d(21), createdBy: ADMIN_ID },
+    ])
+    .onConflictDoNothing();
+  // CAMP_DRAFT cũ chưa có open_at → set tương lai để hiện ở "Sắp tới".
+  await db.update(campaigns).set({ openAt: d(7) }).where(and(eq(campaigns.id, CAMP_DRAFT), isNull(campaigns.openAt)));
+  console.log('• seed sắp diễn ra: 4 campaign DRAFT (open_at tương lai) + open_at cho CAMP_DRAFT');
+}
+
 async function main(): Promise<void> {
   await seedConfig();
   await seedDemo();
   await seedMore();
   await seedScenarios();
+  await seedUpcomingCampaigns();
   await backfillUsernamesAndPrize();
   console.log('✓ seed hoàn tất');
   await pool.end();

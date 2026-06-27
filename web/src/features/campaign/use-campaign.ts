@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { CampaignStatus } from '@/types/api';
+import type { CampaignStatus, LeaderboardPeriod } from '@/types/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { campaignApi } from './campaign-api';
 
@@ -15,10 +15,10 @@ export function useCampaign(id: string | undefined) {
   });
 }
 
-export function useLeaderboard(id: string | undefined, poll = true) {
+export function useLeaderboard(id: string | undefined, poll = true, period?: LeaderboardPeriod) {
   return useQuery({
-    queryKey: ['leaderboard', id],
-    queryFn: () => campaignApi.leaderboard(id!),
+    queryKey: ['leaderboard', id, period ?? 'all'],
+    queryFn: () => campaignApi.leaderboard(id!, period),
     enabled: !!id,
     refetchInterval: poll ? 7_000 : false,
   });

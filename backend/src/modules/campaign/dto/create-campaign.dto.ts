@@ -45,6 +45,53 @@ export class CreateCampaignDto {
   closeAt?: string;
 }
 
+// Sửa campaign (DEV): mọi field optional, áp dụng cho mọi trạng thái (kể cả RESOLVED).
+export class UpdateCampaignDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  title?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  rulesContent?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  prize?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  starGoal?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10000)
+  donationRatioBps?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsISO8601()
+  openAt?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsISO8601()
+  closeAt?: string;
+}
+
 export class AddIdolDto {
   @ApiProperty()
   @IsString()

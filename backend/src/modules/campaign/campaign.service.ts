@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, desc, eq, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, lt, lte, sql } from 'drizzle-orm';
 import { Database, DRIZZLE } from '../../db/drizzle.provider';
 import { DbOrTx } from '../../db/types';
 import {
@@ -9,10 +9,12 @@ import {
   campaigns,
   donationReceipts,
   idols,
+  voteLogs,
 } from '../../db/schema';
+import { type LeaderboardPeriod, periodRange } from '../../common/utils/time.util';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { AuditService } from '../audit/audit.service';
-import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { CreateCampaignDto, UpdateCampaignDto } from './dto/create-campaign.dto';
 
 @Injectable()
 export class CampaignService {
@@ -37,6 +39,23 @@ export class CampaignService {
       })
       .returning();
     await this.audit.record(adminId, 'campaign.create', 'campaign', rows[0].id);
+    return rows[0];
+  }
+
+  // Sửa campaign (DEV): cập nhật field defined cho MỌI trạng thái (kể cả RESOLVED) — không guard.
+  async update(adminId: string, id: string, dto: UpdateCampaignDto): Promise<Campaign> {
+    const patch: Partial<typeof campaigns.$inferInsert> = { updatedAt: new Date() };
+    if (dto.title !== undefined) patch.title = dto.title;
+    if (dto.description !== undefined) patch.description = dto.description;
+    if (dto.rulesContent !== undefined) patch.rulesContent = dto.rulesContent;
+    if (dto.prize !== undefined) patch.prize = dto.prize;
+    if (dto.starGoal !== undefined) patch.starGoal = dto.starGoal;
+    if (dto.donationRatioBps !== undefined) patch.donationRatioBps = dto.donationRatioBps;
+    if (dto.openAt !== undefined) patch.openAt = dto.openAt ? new Date(dto.openAt) : null;
+    if (dto.closeAt !== undefined) patch.closeAt = dto.closeAt ? new Date(dto.closeAt) : null;
+    const rows = await this.db.update(campaigns).set(patch).where(eq(campaigns.id, id)).returning();
+    if (rows.length === 0) throw new BusinessException('NOT_FOUND', 'Campaign không tồn tại');
+    await this.audit.record(adminId, 'campaign.update', 'campaign', id);
     return rows[0];
   }
 
@@ -68,20 +87,48 @@ export class CampaignService {
   }
 
   // Leaderboard: tie-break reached_value_at sớm hơn (first-to-reach), rồi id — §6.
-  async getLeaderboard(campaignId: string) {
+  // period (DAY/WEEK/MONTH, UTC+7) → tính totalVotes từ vote_logs trong kỳ; bỏ trống = all-time.
+  async getLeaderboard(campaignId: string, period?: LeaderboardPeriod) {
+    if (!period) {
+      return this.db
+        .select({
+          campaignIdolId: campaignIdols.id,
+          idolId: idols.id,
+          name: idols.name,
+          avatarUrl: idols.avatarUrl,
+          totalVotes: campaignIdols.totalVotes,
+          reachedValueAt: campaignIdols.reachedValueAt,
+        })
+        .from(campaignIdols)
+        .innerJoin(idols, eq(campaignIdols.idolId, idols.id))
+        .where(eq(campaignIdols.campaignId, campaignId))
+        .orderBy(desc(campaignIdols.totalVotes), asc(campaignIdols.reachedValueAt), asc(campaignIdols.id));
+    }
+    const { start, end } = periodRange(period);
+    const periodVotes = sql<number>`COALESCE(SUM(${voteLogs.amount}), 0)`;
     return this.db
       .select({
         campaignIdolId: campaignIdols.id,
         idolId: idols.id,
         name: idols.name,
         avatarUrl: idols.avatarUrl,
-        totalVotes: campaignIdols.totalVotes,
+        totalVotes: periodVotes.mapWith(Number),
         reachedValueAt: campaignIdols.reachedValueAt,
       })
       .from(campaignIdols)
       .innerJoin(idols, eq(campaignIdols.idolId, idols.id))
+      .leftJoin(
+        voteLogs,
+        and(
+          eq(voteLogs.campaignIdolId, campaignIdols.id),
+          eq(voteLogs.isReversal, false),
+          gte(voteLogs.createdAt, start),
+          lt(voteLogs.createdAt, end),
+        ),
+      )
       .where(eq(campaignIdols.campaignId, campaignId))
-      .orderBy(desc(campaignIdols.totalVotes), asc(campaignIdols.reachedValueAt), asc(campaignIdols.id));
+      .groupBy(campaignIdols.id, idols.id, idols.name, idols.avatarUrl, campaignIdols.reachedValueAt)
+      .orderBy(desc(periodVotes), asc(campaignIdols.id));
   }
 
   // User đưa idol đã duyệt vào campaign OPEN — §7.

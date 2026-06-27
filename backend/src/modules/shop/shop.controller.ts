@@ -57,6 +57,12 @@ export class ShopController {
     return this.dailyReward.listConfig();
   }
 
+  @Get('daily-reward/status')
+  @ApiOperation({ summary: 'Trạng thái điểm danh hôm nay (claimedToday)' })
+  dailyRewardStatus(@CurrentUser() user: AuthUser) {
+    return this.dailyReward.status(user.id);
+  }
+
   @Post('daily-reward/claim')
   @ApiOperation({ summary: 'Điểm danh nhận Green (1 lần/ngày)' })
   claimDaily(@CurrentUser() user: AuthUser) {

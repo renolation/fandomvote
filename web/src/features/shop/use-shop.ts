@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateAddressBody } from '@/types/api';
+import { useAuth } from '@/features/auth/auth-context';
 import { shopApi } from './shop-api';
 
 export function useDeals() {
@@ -20,6 +21,11 @@ export function useActiveEvents() {
 
 export function useDailyRewardConfig() {
   return useQuery({ queryKey: ['daily-reward'], queryFn: shopApi.dailyRewardConfig });
+}
+
+export function useDailyRewardStatus() {
+  const { isAuthed } = useAuth();
+  return useQuery({ queryKey: ['daily-reward-status'], queryFn: shopApi.dailyRewardStatus, enabled: isAuthed });
 }
 
 export function useGifts() {
@@ -46,7 +52,10 @@ export function useClaimDaily() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => shopApi.claimDaily(),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['balance'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['balance'] });
+      qc.invalidateQueries({ queryKey: ['daily-reward-status'] });
+    },
   });
 }
 

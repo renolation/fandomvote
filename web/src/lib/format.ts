@@ -38,17 +38,17 @@ export function relativeTime(iso: string | null, nowMs: number): string {
 }
 
 // Đếm ngược dựa mốc SERVER (iso) — chỉ hiển thị, không quyết định nghiệp vụ (§0.3).
+// Đơn vị nhỏ nhất = PHÚT (không hiện giây).
 export function countdownLabel(targetIso: string | null, nowMs: number): string {
   if (!targetIso) return '';
   const diff = new Date(targetIso).getTime() - nowMs;
   if (diff <= 0) return 'Đã hết hạn';
-  const s = Math.floor(diff / 1000);
-  const d = Math.floor(s / 86400);
-  const h = Math.floor((s % 86400) / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  if (d > 0) return `${d}n ${h}g`;
+  const totalMin = Math.floor(diff / 60_000);
+  if (totalMin < 1) return 'Dưới 1 phút';
+  const d = Math.floor(totalMin / 1440);
+  const h = Math.floor((totalMin % 1440) / 60);
+  const m = totalMin % 60;
+  if (d > 0) return `${d}n ${h}g ${m}p`;
   if (h > 0) return `${h}g ${m}p`;
-  if (m > 0) return `${m}p ${sec}s`;
-  return `${sec}s`;
+  return `${m}p`;
 }

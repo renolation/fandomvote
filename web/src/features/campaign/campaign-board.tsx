@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { NeuButton, NeuDialog } from '@/components/neu';
-import { ErrorState, Loading } from '@/components/state-views';
+import { EmptyState, ErrorState, Loading } from '@/components/state-views';
 import { colorForId, stripeStyle } from '@/lib/avatar';
 import { countdownLabel, formatNumber } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
-import type { Campaign, LeaderboardEntry } from '@/types/api';
+import type { Campaign, LeaderboardEntry, LeaderboardPeriod, LeaderboardType } from '@/types/api';
+import { useAuth } from '@/features/auth/auth-context';
 import { useAuthGate } from '@/features/auth/use-auth-gate';
 import { AddIdolDialog } from '@/features/idol/add-idol-dialog';
 import { VoteDialog } from '@/features/vote/vote-dialog';
+import { useBoard } from '@/features/leaderboard/use-leaderboard';
 import { useLeaderboard } from './use-campaign';
 
 const card: React.CSSProperties = {
@@ -18,6 +20,49 @@ const card: React.CSSProperties = {
   padding: '15px 18px',
 };
 
+// Bảng xếp hạng gộp: Idol = BXH vote của campaign; Top Voter/Earner = tích luỹ theo kỳ.
+type BoardTab = 'IDOL' | LeaderboardType;
+const BOARD_TABS: { key: BoardTab; label: string }[] = [
+  { key: 'IDOL', label: '🏆 Idol' },
+  { key: 'TOP_VOTER', label: '🗳️ Top Voter' },
+  { key: 'TOP_EARNER', label: '💰 Top Earner' },
+];
+const BOARD_PERIODS: { key: LeaderboardPeriod; label: string }[] = [
+  { key: 'DAY', label: '📅 Ngày' },
+  { key: 'WEEK', label: '📅 Tuần' },
+  { key: 'MONTH', label: '📅 Tháng' },
+];
+// Tab Idol có thêm "Tất cả" (all-time) ngoài các kỳ.
+type IdolPeriod = 'ALL' | LeaderboardPeriod;
+const IDOL_PERIODS: { key: IdolPeriod; label: string }[] = [
+  { key: 'ALL', label: '📅 Tất cả' },
+  { key: 'DAY', label: '📅 Ngày' },
+  { key: 'WEEK', label: '📅 Tuần' },
+  { key: 'MONTH', label: '📅 Tháng' },
+];
+const MEDALS = ['🥇', '🥈', '🥉'];
+const periodSelectStyle: React.CSSProperties = {
+  border: '3px solid var(--c-ink)',
+  borderRadius: 10,
+  padding: '9px 14px',
+  fontWeight: 700,
+  fontFamily: 'var(--font-head)',
+  fontSize: 14,
+  background: 'var(--c-white)',
+  cursor: 'pointer',
+  boxShadow: '3px 3px 0 var(--c-ink)',
+};
+const segStyle = (active: boolean): React.CSSProperties => ({
+  border: 'none',
+  padding: '8px 14px',
+  fontWeight: 700,
+  fontSize: 12,
+  fontFamily: 'var(--font-head)',
+  cursor: 'pointer',
+  background: active ? 'var(--c-ink)' : 'var(--c-white)',
+  color: active ? '#fff' : 'var(--c-ink)',
+});
+
 export function CampaignBoard({ campaign }: { campaign: Campaign }) {
   const votable = campaign.status === 'OPEN' && (!campaign.closeAt || new Date(campaign.closeAt).getTime() > Date.now());
   const { data, isLoading, error, refetch } = useLeaderboard(campaign.id, votable);
@@ -26,6 +71,18 @@ export function CampaignBoard({ campaign }: { campaign: Campaign }) {
   const [voteEntry, setVoteEntry] = useState<LeaderboardEntry | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+
+  const { user } = useAuth();
+  const [boardTab, setBoardTab] = useState<BoardTab>('IDOL');
+  const [boardPeriod, setBoardPeriod] = useState<LeaderboardPeriod>('WEEK');
+  const [idolPeriod, setIdolPeriod] = useState<IdolPeriod>('ALL');
+  const isIdolBoard = boardTab === 'IDOL';
+  // useBoard luôn được gọi (hook rule); chỉ dùng kết quả khi không ở tab Idol.
+  const userBoard = useBoard(isIdolBoard ? 'TOP_VOTER' : boardTab, boardPeriod);
+  // BXH Idol lọc theo kỳ (ALL = all-time → dùng chung cache với podium).
+  const idolBoard = useLeaderboard(campaign.id, votable, idolPeriod === 'ALL' ? undefined : idolPeriod);
+  const idolEntries = idolBoard.data ?? [];
+  const boardUnit = boardTab === 'TOP_EARNER' ? '🟡' : '⭐';
 
   const goal = campaign.starGoal;
   const pct = (n: number) => (goal > 0 ? Math.min(100, Math.round((n / goal) * 100)) : 0);
@@ -154,36 +211,96 @@ export function CampaignBoard({ campaign }: { campaign: Campaign }) {
         </div>
       )}
 
-      {/* Full leaderboard */}
-      <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 20, marginBottom: 14 }}>🏆 Bảng xếp hạng đầy đủ</div>
-      <div className="col">
-        {entries.map((e, i) => (
-          <div key={e.campaignIdolId} style={{ ...card, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div className="mono" style={{ width: 38, height: 38, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: '3px solid var(--c-ink)', borderRadius: 10, background: i === 0 ? 'var(--c-yellow)' : '#f0ebdf' }}>
-              {i + 1}
-            </div>
-            <div style={stripeStyle(colorForId(e.idolId), 44)} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="row">
-                <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>{e.name}</span>
-                {i === 0 && <span>👑</span>}
-              </div>
-              <div className="bar-track" style={{ marginTop: 7, maxWidth: 420 }}>
-                <div className="bar-fill" style={{ width: `${pct(e.totalVotes)}%`, background: colorForId(e.idolId) }} />
-              </div>
-            </div>
-            <div style={{ textAlign: 'right', flex: 'none' }}>
-              <div className="mono" style={{ fontWeight: 700, fontSize: 15 }}>{formatNumber(e.totalVotes)} ⭐</div>
-              <div className="mono" style={{ fontSize: 11, color: '#999' }}>{pct(e.totalVotes)}% goal</div>
-            </div>
-            {votable && (
-              <NeuButton style={{ flex: 'none' }} onClick={() => gate(() => setVoteEntry(e))}>
-                VOTE
-              </NeuButton>
-            )}
+      {/* Bảng xếp hạng gộp: Idol (BXH vote campaign) + Top Voter/Earner (tích luỹ theo kỳ) */}
+      <div className="spread" style={{ flexWrap: 'wrap', gap: 12, margin: '4px 0 16px' }}>
+        <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 20 }}>🏅 Bảng xếp hạng</span>
+        <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', border: '3px solid var(--c-ink)', borderRadius: 10, overflow: 'hidden' }}>
+            {BOARD_TABS.map((t) => (
+              <button key={t.key} style={segStyle(boardTab === t.key)} onClick={() => setBoardTab(t.key)}>
+                {t.label}
+              </button>
+            ))}
           </div>
-        ))}
+          {isIdolBoard ? (
+            <select value={idolPeriod} onChange={(e) => setIdolPeriod(e.target.value as IdolPeriod)} style={periodSelectStyle}>
+              {IDOL_PERIODS.map((p) => (
+                <option key={p.key} value={p.key}>{p.label}</option>
+              ))}
+            </select>
+          ) : (
+            <select value={boardPeriod} onChange={(e) => setBoardPeriod(e.target.value as LeaderboardPeriod)} style={periodSelectStyle}>
+              {BOARD_PERIODS.map((p) => (
+                <option key={p.key} value={p.key}>{p.label}</option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
+
+      {isIdolBoard ? (
+        // Tab Idol = bảng xếp hạng vote của campaign (lọc theo kỳ) — có progress + nút VOTE
+        <div className="col">
+          {idolBoard.isLoading && idolEntries.length === 0 && <Loading />}
+          {idolEntries.map((e, i) => (
+            <div key={e.campaignIdolId} style={{ ...card, display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="mono" style={{ width: 38, height: 38, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: '3px solid var(--c-ink)', borderRadius: 10, background: i === 0 ? 'var(--c-yellow)' : '#f0ebdf' }}>
+                {i + 1}
+              </div>
+              <div style={stripeStyle(colorForId(e.idolId), 44)} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="row">
+                  <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>{e.name}</span>
+                  {i === 0 && <span>👑</span>}
+                </div>
+                <div className="bar-track" style={{ marginTop: 7, maxWidth: 420 }}>
+                  <div className="bar-fill" style={{ width: `${pct(e.totalVotes)}%`, background: colorForId(e.idolId) }} />
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', flex: 'none' }}>
+                <div className="mono" style={{ fontWeight: 700, fontSize: 15 }}>{formatNumber(e.totalVotes)} ⭐</div>
+                <div className="mono" style={{ fontSize: 11, color: '#999' }}>{pct(e.totalVotes)}% goal</div>
+              </div>
+              {votable && (
+                <NeuButton style={{ flex: 'none' }} onClick={() => gate(() => setVoteEntry(e))}>
+                  VOTE
+                </NeuButton>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        // Tab Top Voter / Top Earner = tích luỹ người dùng theo kỳ
+        <>
+          <div style={{ background: 'var(--c-white)', border: '3px solid var(--c-ink)', borderRadius: 14, boxShadow: '4px 4px 0 var(--c-ink)', overflow: 'hidden' }}>
+            {userBoard.isLoading && <div style={{ padding: 16 }}><Loading /></div>}
+            {userBoard.data && userBoard.data.length === 0 && (
+              <div style={{ padding: 16 }}><EmptyState message="Chưa có dữ liệu kỳ này." /></div>
+            )}
+            {userBoard.data?.map((u, i) => {
+              const me = !!user && user.id === u.userId;
+              return (
+                <div key={u.userId} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: '2px solid #efe9dc', background: me ? '#FFF9E0' : undefined }}>
+                  <span className="mono" style={{ width: 34, textAlign: 'center', fontSize: i < 3 ? 19 : 14, fontWeight: 700 }}>
+                    {i < 3 ? MEDALS[i] : `#${u.rank}`}
+                  </span>
+                  <div style={stripeStyle(colorForId(u.userId), 34)} />
+                  <span style={{ flex: 1, fontSize: 15, fontWeight: me ? 700 : 500 }}>
+                    {u.name}
+                    {me && ' (bạn)'}
+                  </span>
+                  <span className="mono" style={{ fontWeight: 700, fontSize: 14 }}>
+                    {formatNumber(u.score)} {boardUnit}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: 12, color: '#777', marginTop: 8 }}>
+            Hết kỳ → admin duyệt chống gian lận → trao thưởng; người thắng nhận thông báo cung cấp thông tin nhận quà qua email.
+          </div>
+        </>
+      )}
 
       <VoteDialog campaign={campaign} entry={voteEntry} onClose={() => setVoteEntry(null)} />
       <AddIdolDialog campaignId={campaign.id} open={addOpen} onClose={() => setAddOpen(false)} />

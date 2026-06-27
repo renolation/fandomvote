@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Campaign, CreateCampaignBody, UpdateUserBody } from '@/types/api';
+import type { Campaign, CreateCampaignBody, UpdateCampaignBody, UpdateUserBody } from '@/types/api';
 import { adminApi, type ResolutionResult } from './admin-api';
 
 export function useAdminUsers(search: string, flaggedOnly: boolean) {
@@ -100,6 +100,14 @@ function invalidateCampaign(qc: ReturnType<typeof useQueryClient>, id: string) {
   qc.invalidateQueries({ queryKey: ['campaigns'] });
   qc.invalidateQueries({ queryKey: ['campaign', id] });
   qc.invalidateQueries({ queryKey: ['campaign-result', id] });
+}
+
+export function useUpdateCampaign() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; body: UpdateCampaignBody }) => adminApi.updateCampaign(v.id, v.body),
+    onSuccess: (_d, v) => invalidateCampaign(qc, v.id),
+  });
 }
 
 // ---- Hard-delete (xoá vĩnh viễn) ----

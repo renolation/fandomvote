@@ -511,6 +511,16 @@ export interface CreateCampaignBody {
   openAt?: string;
   closeAt?: string;
 }
+export interface UpdateCampaignBody {
+  title?: string;
+  description?: string;
+  rulesContent?: string;
+  prize?: string;
+  starGoal?: number;
+  donationRatioBps?: number;
+  openAt?: string | null;
+  closeAt?: string | null;
+}
 export interface UpdateProfileBody {
   avatarUrl?: string;
   displayName?: string;

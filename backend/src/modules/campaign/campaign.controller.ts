@@ -27,9 +27,9 @@ export class CampaignController {
 
   @Public()
   @Get(':id/leaderboard')
-  @ApiOperation({ summary: 'Bảng xếp hạng (poll 5–10s)' })
-  leaderboard(@Param('id') id: string) {
-    return this.campaign.getLeaderboard(id);
+  @ApiOperation({ summary: 'Bảng xếp hạng (poll 5–10s); period=DAY|WEEK|MONTH lọc theo kỳ' })
+  leaderboard(@Param('id') id: string, @Query('period') period?: 'DAY' | 'WEEK' | 'MONTH') {
+    return this.campaign.getLeaderboard(id, period);
   }
 
   @Public()

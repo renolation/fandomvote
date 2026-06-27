@@ -10,6 +10,7 @@ import type {
   IdolStatus,
   Paginated,
   ReconcileSummary,
+  UpdateCampaignBody,
   UpdateUserBody,
 } from '@/types/api';
 
@@ -28,6 +29,8 @@ export const adminApi = {
   approveIdol: (id: string) => api.post<Idol>(`/admin/idols/${id}/approve`),
   rejectIdol: (id: string) => api.post<Idol>(`/admin/idols/${id}/reject`),
   createCampaign: (body: CreateCampaignBody) => api.post<Campaign>('/admin/campaigns', body),
+  updateCampaign: (id: string, body: UpdateCampaignBody) =>
+    api.post<Campaign>(`/admin/campaigns/${id}/update`, body),
   openCampaign: (id: string) => api.post<Campaign>(`/admin/campaigns/${id}/open`),
   closeCampaign: (id: string) => api.post<{ closed: boolean }>(`/admin/campaigns/${id}/close`),
   resolveCampaign: (id: string) => api.post<ResolutionResult>(`/admin/campaigns/${id}/resolve`),

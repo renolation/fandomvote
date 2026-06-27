@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, eq } from 'drizzle-orm';
 import { Database, DRIZZLE } from '../../db/drizzle.provider';
-import { dailyRewardsConfig } from '../../db/schema';
+import { dailyRewardsConfig, greenDailyCounter } from '../../db/schema';
+import { vnDateString } from '../../common/utils/time.util';
 import { lockUser } from '../../common/utils/wallet-lock.util';
 import { PlatformConfigService } from '../platform-config/platform-config.service';
 import { GreenCounterService } from '../wallet/green-counter.service';
@@ -42,5 +43,16 @@ export class DailyRewardService {
       .from(dailyRewardsConfig)
       .where(eq(dailyRewardsConfig.isActive, true))
       .orderBy(asc(dailyRewardsConfig.dayIndex));
+  }
+
+  // Trạng thái điểm danh hôm nay (UTC+7) của user → FE tô màu ô + khoá nút.
+  async status(userId: string): Promise<{ claimedToday: boolean }> {
+    const date = vnDateString();
+    const rows = await this.db
+      .select({ at: greenDailyCounter.checkinClaimedAt })
+      .from(greenDailyCounter)
+      .where(and(eq(greenDailyCounter.userId, userId), eq(greenDailyCounter.date, date)))
+      .limit(1);
+    return { claimedToday: !!rows[0]?.at };
   }
 }
