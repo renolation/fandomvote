@@ -9,7 +9,7 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-// Runtime config inject bởi /config.js (container web sinh từ env API_BASE_URL).
+// Runtime config inject bởi /config.js (container web sinh từ env API_BASE_URL + GOOGLE_CLIENT_ID).
 interface Window {
-  __FDV_CONFIG__?: { apiBaseUrl?: string };
+  __FDV_CONFIG__?: { apiBaseUrl?: string; googleClientId?: string };
 }

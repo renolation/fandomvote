@@ -1,30 +1,49 @@
 # FDV stack: backend (NestJS) + web (React/nginx). DB ngoài qua DATABASE_URL.
-# Deploy (VPS): copy .env.local cạnh file này rồi:
-#   docker compose pull && docker compose up -d
-# Web → http://<host>:8080 · API → http://<host>:8001/api/v1 (Swagger /api/docs)
+# Env nội suy từ ${...}:
+#   - Local:  docker compose --env-file .env.local up -d   (hoặc đặt file .env cạnh đây)
+#   - Komodo: dán biến vào ô "Environment" của Stack → Komodo ghi ra .env → compose nội suy.
+# Web → :8080 · API → :8001/api/v1 (Swagger /api/docs)
 services:
   backend:
     image: renolation/fdv-backend:latest
     container_name: fdv-backend
-    # Toàn bộ secret (DATABASE_URL, JWT_*, R2_*, webhook, PORT…) đọc từ .env.local.
-    env_file:
-      - .env.local
     environment:
-      # Đè cứng cho container production (ghi đè giá trị trùng trong .env.local).
-      NODE_ENV: production
-      # migrate luôn chạy lúc start; seed chỉ khi SEED_ON_START=true (idempotent)
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-8001}
+      TIMEZONE: ${TIMEZONE:-Asia/Ho_Chi_Minh}
+      # DB ngoài — bắt buộc
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-1800}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-2592000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      IAP_WEBHOOK_SECRET: ${IAP_WEBHOOK_SECRET:-change-me-iap-webhook-secret}
+      OFFERWALL_POSTBACK_SECRET: ${OFFERWALL_POSTBACK_SECRET:-change-me-offerwall-secret}
+      # Cloudflare R2 (upload ảnh)
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET: ${R2_BUCKET:-cdn-dev}
+      R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-}
+      # migrate luôn chạy lúc start; seed chỉ khi =true (idempotent)
+      SEED_ON_START: ${SEED_ON_START:-false}
     ports:
-      - '8001:8001'
+      - '${PORT:-8001}:${PORT:-8001}'
     restart: unless-stopped
 
   web:
     image: renolation/fdv-web:latest
     container_name: fdv-web
-    # web chỉ dùng BACKEND_ORIGIN + API_BASE_URL; các biến khác trong .env.local bị bỏ qua.
-    env_file:
-      - .env.local
+    environment:
+      # Cùng origin: để API_BASE_URL rỗng → web gọi /api, nginx proxy sang BACKEND_ORIGIN (nội bộ).
+      BACKEND_ORIGIN: ${BACKEND_ORIGIN:-http://backend:8001}
+      # 2 nơi khác nhau: set API_BASE_URL = URL backend public (browser gọi trực tiếp, backend bật CORS).
+      API_BASE_URL: ${API_BASE_URL:-}
+      # Bật nút "Đăng nhập Google" — cùng OAuth client ID với backend (rỗng → ẩn nút).
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     depends_on:
       - backend
     ports:
-      - '8080:80'
+      - '${WEB_PORT:-8080}:80'
     restart: unless-stopped

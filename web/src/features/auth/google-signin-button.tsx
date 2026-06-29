@@ -13,7 +13,10 @@ declare global {
 }
 
 export function GoogleSignInButton({ referralCode }: { referralCode?: string }) {
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  // Runtime config (container inject /config.js) ưu tiên, fallback build-time env (dev).
+  const clientId =
+    (typeof window !== 'undefined' ? window.__FDV_CONFIG__?.googleClientId : undefined) ||
+    import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const ref = useRef<HTMLDivElement>(null);
   const { google } = useAuth();
   const navigate = useNavigate();
