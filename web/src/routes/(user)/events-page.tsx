@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { NeuCard } from '@/components/neu';
 import { EmptyState, ErrorState, Loading } from '@/components/state-views';
 import { countdownLabel } from '@/lib/format';
@@ -7,6 +6,7 @@ import { useNow } from '@/lib/use-now';
 import { useCampaigns } from '@/features/campaign/use-campaign';
 import { useAllEvents } from '@/features/events/use-events';
 import { EventDetailModal } from '@/features/events/event-detail-modal';
+import { CampaignEventModal } from '@/features/events/campaign-event-modal';
 import type { Campaign, PointEvent } from '@/types/api';
 
 const head: React.CSSProperties = { fontFamily: 'var(--font-head)', fontWeight: 700 };
@@ -22,7 +22,7 @@ interface FeedItem {
   countdownIso: string | null;
   // exactly one of these:
   event?: PointEvent;
-  to?: string;
+  campaign?: Campaign;
 }
 
 const EVENT_ICON: Record<PointEvent['type'], string> = {
@@ -81,7 +81,7 @@ function mapCampaign(c: Campaign, now: number): FeedItem | null {
     title: c.title,
     subtitle: 'Chiến dịch bình chọn',
     countdownIso,
-    to: `/campaigns/${c.id}`,
+    campaign: c,
   };
 }
 
@@ -108,6 +108,7 @@ export function EventsPage() {
   const events = useAllEvents();
   const campaigns = useCampaigns();
   const [selected, setSelected] = useState<PointEvent | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
   const items = useMemo<FeedItem[]>(() => {
     const out: FeedItem[] = [];
@@ -135,30 +136,26 @@ export function EventsPage() {
         return (
           <div key={section.bucket} className="col" style={{ gap: 12 }}>
             <div style={{ ...head, fontSize: 18 }}>{section.title}</div>
-            {list.map((item) =>
-              item.to ? (
-                <Link key={item.key} to={item.to} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <NeuCard style={{ cursor: 'pointer' }}>
-                    <EventCardInner item={item} now={now} />
-                  </NeuCard>
-                </Link>
-              ) : (
-                <NeuCard key={item.key} style={{ cursor: 'pointer' }}>
-                  <button
-                    type="button"
-                    onClick={() => item.event && setSelected(item.event)}
-                    style={{ all: 'unset', display: 'block', width: '100%', cursor: 'pointer' }}
-                  >
-                    <EventCardInner item={item} now={now} />
-                  </button>
-                </NeuCard>
-              ),
-            )}
+            {list.map((item) => (
+              <NeuCard key={item.key} style={{ cursor: 'pointer' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (item.event) setSelected(item.event);
+                    else if (item.campaign) setSelectedCampaign(item.campaign);
+                  }}
+                  style={{ all: 'unset', display: 'block', width: '100%', cursor: 'pointer' }}
+                >
+                  <EventCardInner item={item} now={now} />
+                </button>
+              </NeuCard>
+            ))}
           </div>
         );
       })}
 
       <EventDetailModal event={selected} onClose={() => setSelected(null)} />
+      <CampaignEventModal campaign={selectedCampaign} onClose={() => setSelectedCampaign(null)} />
     </div>
   );
 }

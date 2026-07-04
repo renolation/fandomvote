@@ -21,7 +21,8 @@ const chip = (active: boolean): React.CSSProperties => ({
 });
 
 export function VotePage() {
-  const { data, isLoading, error, refetch } = useCampaigns();
+  // Trang vote chỉ hiện campaign đang mở (bình chọn được); campaign đã kết thúc/nháp không hiện ở đây.
+  const { data, isLoading, error, refetch } = useCampaigns('OPEN');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [nominateOpen, setNominateOpen] = useState(false);
   const gate = useAuthGate();
@@ -29,12 +30,9 @@ export function VotePage() {
   if (isLoading) return <Loading />;
   if (error) return <ErrorState error={error} onRetry={() => refetch()} />;
   const campaigns = data ?? [];
-  if (campaigns.length === 0) return <EmptyState message="Chưa có chiến dịch nào." />;
+  if (campaigns.length === 0) return <EmptyState message="Chưa có chiến dịch đang mở." />;
 
-  const selected =
-    campaigns.find((c) => c.id === selectedId) ??
-    campaigns.find((c) => c.status === 'OPEN') ??
-    campaigns[0];
+  const selected = campaigns.find((c) => c.id === selectedId) ?? campaigns[0];
 
   return (
     <div className="col">

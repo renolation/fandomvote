@@ -22,6 +22,12 @@ export function formatDateTime(iso: string | null): string {
   return new Date(iso).toLocaleString('vi-VN', { hour12: false });
 }
 
+// Chỉ ngày (dd/mm/yyyy) — dùng cho khoảng thời gian sự kiện/campaign.
+export function formatDate(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('vi-VN');
+}
+
 // Thời gian tương đối (Vừa xong / N phút trước / Hôm qua…) — chỉ hiển thị.
 export function relativeTime(iso: string | null, nowMs: number): string {
   if (!iso) return '';

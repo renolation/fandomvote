@@ -516,8 +516,52 @@ async function seedUpcomingCampaigns(): Promise<void> {
   console.log('• seed sắp diễn ra: 4 campaign DRAFT (open_at tương lai) + open_at cho CAMP_DRAFT');
 }
 
+// ===== Danh mục shop + sự kiện (offer wall, gói IAP, point events) =====
+// Seed VÔ ĐIỀU KIỆN + idempotent (onConflictDoNothing): guard của seedDemo bỏ qua khi DB
+// đã có demo, nên data thêm về sau (offer/iap/6 events) không vào được → luôn bổ sung ở đây.
+async function seedCatalog(): Promise<void> {
+  const now = new Date();
+  const at = (days: number) => new Date(now.getTime() + days * 86400000);
+
+  await db
+    .insert(offerTasks)
+    .values([
+      { id: '00000000-0000-4000-8000-000000000061', title: 'Xem video 30 giây', icon: '🎬', iconBg: '#FB7185', rewardGold: 20, sortOrder: 1 },
+      { id: '00000000-0000-4000-8000-000000000062', title: 'Hoàn thành khảo sát', icon: '📝', iconBg: '#3B82F6', rewardGold: 50, sortOrder: 2 },
+      { id: '00000000-0000-4000-8000-000000000063', title: 'Mời bạn bè', icon: '👥', iconBg: '#22C55E', rewardGold: 100, sortOrder: 3 },
+      { id: '00000000-0000-4000-8000-000000000064', title: 'Theo dõi fanpage', icon: '❤️', iconBg: '#FFD60A', rewardGold: 15, sortOrder: 4 },
+    ])
+    .onConflictDoNothing();
+
+  await db
+    .insert(iapPackages)
+    .values([
+      { id: '00000000-0000-4000-8000-000000000071', sku: 'dia_100', title: '100 Diamond', diamondAmount: 100, bonusDiamond: 0, priceVnd: 10000 },
+      { id: '00000000-0000-4000-8000-000000000072', sku: 'dia_550', title: '550 Diamond', diamondAmount: 500, bonusDiamond: 50, priceVnd: 50000 },
+      { id: '00000000-0000-4000-8000-000000000073', sku: 'dia_1200', title: '1.200 Diamond', diamondAmount: 1200, bonusDiamond: 0, priceVnd: 100000 },
+      { id: '00000000-0000-4000-8000-000000000074', sku: 'dia_6500', title: '6.500 Diamond', diamondAmount: 5000, bonusDiamond: 1500, priceVnd: 500000 },
+    ])
+    .onConflictDoNothing();
+
+  // ongoing/upcoming/past cho trang Sự kiện; b1 ongoing → banner ×2 GOLD ở Shop hiển thị.
+  await db
+    .insert(pointEvents)
+    .values([
+      { id: '00000000-0000-4000-8000-0000000009b1', title: '×2 Gold cuối tuần', type: 'EARN_MULTIPLIER', targetCurrency: 'GOLD', multiplierBps: 20000, priority: 8, startsAt: at(-2), endsAt: at(2), bannerText: 'Nhân đôi Gold mọi nhiệm vụ cuối tuần!', isActive: true },
+      { id: '00000000-0000-4000-8000-0000000009b2', title: 'Nạp Diamond +50%', type: 'TOPUP_MULTIPLIER', targetCurrency: 'DIAMOND', multiplierBps: 15000, priority: 7, startsAt: at(-1), endsAt: at(4), bannerText: 'Nạp Diamond nhận thêm 50% giá trị.', isActive: true },
+      { id: '00000000-0000-4000-8000-0000000009b3', title: '×3 Green ngày lễ', type: 'EARN_MULTIPLIER', targetCurrency: 'GREEN', multiplierBps: 30000, priority: 9, startsAt: at(5), endsAt: at(7), bannerText: 'Sắp tới: nhân ba Green dịp lễ!', isActive: true },
+      { id: '00000000-0000-4000-8000-0000000009b4', title: 'Nạp Diamond +100% Tết', type: 'TOPUP_MULTIPLIER', targetCurrency: 'DIAMOND', multiplierBps: 30000, priority: 9, startsAt: at(10), endsAt: at(14), bannerText: 'Tết về: nạp Diamond x2 giá trị!', isActive: true },
+      { id: '00000000-0000-4000-8000-0000000009b5', title: '×2 Gold tháng trước', type: 'EARN_MULTIPLIER', targetCurrency: 'GOLD', multiplierBps: 20000, priority: 5, startsAt: at(-40), endsAt: at(-10), bannerText: 'Sự kiện đã kết thúc.', isActive: false },
+      { id: '00000000-0000-4000-8000-0000000009b6', title: 'Nạp Diamond +50% hè rồi', type: 'TOPUP_MULTIPLIER', targetCurrency: 'DIAMOND', multiplierBps: 15000, priority: 4, startsAt: at(-30), endsAt: at(-8), bannerText: 'Sự kiện đã kết thúc.', isActive: false },
+    ])
+    .onConflictDoNothing();
+
+  console.log('• seed danh mục: 4 offer + 4 iap + 6 point_events (ongoing/upcoming/past)');
+}
+
 async function main(): Promise<void> {
   await seedConfig();
+  await seedCatalog();
   await seedDemo();
   await seedMore();
   await seedScenarios();

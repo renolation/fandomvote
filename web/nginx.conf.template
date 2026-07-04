@@ -28,8 +28,11 @@ server {
     add_header Cache-Control "public, immutable";
   }
 
-  # SPA fallback
+  # SPA fallback + KHÔNG cache config.js/index.html (thay đổi mỗi lần deploy/đổi env).
+  # Nếu cache, đổi env (vd googleClientId) hay bundle mới sẽ bị CDN/browser che bằng bản cũ.
+  # /assets/ (hash trong tên file) vẫn cache dài ở location riêng phía trên.
   location / {
     try_files $uri $uri/ /index.html;
+    add_header Cache-Control "no-store, must-revalidate" always;
   }
 }
