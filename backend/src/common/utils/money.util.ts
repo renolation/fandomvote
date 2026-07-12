@@ -3,6 +3,9 @@
 // 1 Diamond = 1.000 Gold — §4.
 export const DIAMOND_TO_GOLD = 1000;
 
+// Offerwall: 1 USD payout của mạng → Gold thưởng user. Công thức: (USD × 26.000) / 2 = USD × 13.000.
+export const OFFERWALL_USD_TO_GOLD = 13000;
+
 // total sau khi nhân multiplier (vd bps=20000 → x2).
 export function applyMultiplierBps(base: number, bps: number): number {
   return Math.floor((base * bps) / 10000);

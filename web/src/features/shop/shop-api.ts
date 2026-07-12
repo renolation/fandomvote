@@ -4,6 +4,7 @@ import type {
   DailyRewardConfig,
   GiftWalletItem,
   IapPackage,
+  LiveOffer,
   OfferTask,
   PointEvent,
   RedeemResult,
@@ -14,6 +15,7 @@ import type {
 export const shopApi = {
   deals: () => api.get<ShopDeal[]>('/shop/deals'),
   offers: () => api.get<OfferTask[]>('/shop/offers'),
+  liveOffers: () => api.get<LiveOffer[]>('/shop/offers/live'),
   iapPackages: () => api.get<IapPackage[]>('/shop/iap-packages'),
   redeem: (dealId: string) =>
     api.post<RedeemResult>(`/shop/deals/${dealId}/redeem`, undefined, {

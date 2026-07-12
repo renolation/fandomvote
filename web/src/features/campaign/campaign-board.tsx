@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { NeuButton, NeuDialog } from '@/components/neu';
 import { EmptyState, ErrorState, Loading } from '@/components/state-views';
-import { colorForId, stripeStyle } from '@/lib/avatar';
+import { avatarStyle, colorForId, stripeStyle } from '@/lib/avatar';
+import { CAMPAIGN_RULES } from '@/lib/campaign-rules';
 import { countdownLabel, formatNumber } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import type { Campaign, LeaderboardEntry, LeaderboardPeriod, LeaderboardType } from '@/types/api';
@@ -94,11 +95,9 @@ export function CampaignBoard({ campaign }: { campaign: Campaign }) {
       <div className="spread" style={{ marginBottom: 18 }}>
         <h2 style={{ margin: 0 }}>{campaign.title}</h2>
         <div className="row">
-          {campaign.rulesContent && (
-            <NeuButton size="sm" variant="blue" onClick={() => setRulesOpen(true)}>
-              📋 Thể lệ
-            </NeuButton>
-          )}
+          <NeuButton size="sm" variant="blue" onClick={() => setRulesOpen(true)}>
+            📋 Thể lệ
+          </NeuButton>
           {votable && (
             <NeuButton size="sm" onClick={() => gate(() => setAddOpen(true))}>
               + Thêm idol
@@ -177,7 +176,7 @@ export function CampaignBoard({ campaign }: { campaign: Campaign }) {
               >
                 {isTop && <div style={{ fontSize: 30 }}>👑</div>}
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <div style={stripeStyle(colorForId(e.idolId), isTop ? 78 : 64)} />
+                  <div style={avatarStyle(e.avatarUrl, e.idolId, isTop ? 78 : 64)} />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
                   <div
@@ -247,7 +246,7 @@ export function CampaignBoard({ campaign }: { campaign: Campaign }) {
               <div className="mono" style={{ width: 38, height: 38, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: '3px solid var(--c-ink)', borderRadius: 10, background: i === 0 ? 'var(--c-yellow)' : '#f0ebdf' }}>
                 {i + 1}
               </div>
-              <div style={stripeStyle(colorForId(e.idolId), 44)} />
+              <div style={avatarStyle(e.avatarUrl, e.idolId, 44)} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="row">
                   <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>{e.name}</span>
@@ -305,7 +304,25 @@ export function CampaignBoard({ campaign }: { campaign: Campaign }) {
       <VoteDialog campaign={campaign} entry={voteEntry} onClose={() => setVoteEntry(null)} />
       <AddIdolDialog campaignId={campaign.id} open={addOpen} onClose={() => setAddOpen(false)} />
       <NeuDialog open={rulesOpen} onClose={() => setRulesOpen(false)} title="📋 Thể lệ campaign">
-        <div style={{ whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.6 }}>{campaign.rulesContent}</div>
+        <div className="col" style={{ gap: 13 }}>
+          {CAMPAIGN_RULES.map((text, i) => (
+            <div key={i} style={{ display: 'flex', gap: 12 }}>
+              <div
+                className="mono"
+                style={{ width: 28, height: 28, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, background: 'var(--c-yellow)', border: '2px solid var(--c-ink)', borderRadius: 8 }}
+              >
+                {i + 1}
+              </div>
+              <div style={{ fontSize: 14, lineHeight: 1.5, paddingTop: 3 }}>{text}</div>
+            </div>
+          ))}
+          {campaign.rulesContent && (
+            <div style={{ marginTop: 6, paddingTop: 12, borderTop: '2px solid #e2dccc' }}>
+              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, marginBottom: 6 }}>📌 Ghi chú campaign này</div>
+              <div style={{ whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.6 }}>{campaign.rulesContent}</div>
+            </div>
+          )}
+        </div>
       </NeuDialog>
     </div>
   );

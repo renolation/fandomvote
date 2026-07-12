@@ -274,6 +274,18 @@ export interface DailyRewardConfig {
   createdAt: string;
 }
 
+// Offer wall LIVE (Lootably) — đã chuẩn hoá từ backend để hiển thị.
+export interface LiveOffer {
+  id: string;
+  title: string;
+  description: string | null;
+  imageUrl: string | null;
+  actionUrl: string;
+  rewardGold: number;
+  icon?: string | null;
+  iconBg?: string | null;
+}
+
 export interface OfferTask {
   id: string;
   title: string;

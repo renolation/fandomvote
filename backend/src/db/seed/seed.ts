@@ -559,7 +559,17 @@ async function seedCatalog(): Promise<void> {
   console.log('• seed danh mục: 4 offer + 4 iap + 6 point_events (ongoing/upcoming/past)');
 }
 
+// Init-once (kiểu open-source): chỉ seed khi DB CHƯA khởi tạo (bảng platform_config trống).
+// Đã khởi tạo → bỏ qua toàn bộ. Ép seed lại (áp data thêm về sau) bằng SEED_FORCE=true / --force.
 async function main(): Promise<void> {
+  const force = process.env.SEED_FORCE === 'true' || process.argv.includes('--force');
+  const initialized = (await db.select({ k: platformConfig.key }).from(platformConfig).limit(1)).length > 0;
+  if (initialized && !force) {
+    console.log('• DB đã khởi tạo → bỏ qua seed. (SEED_FORCE=true để seed lại data mới.)');
+    await pool.end();
+    return;
+  }
+
   await seedConfig();
   await seedCatalog();
   await seedDemo();
@@ -567,7 +577,7 @@ async function main(): Promise<void> {
   await seedScenarios();
   await seedUpcomingCampaigns();
   await backfillUsernamesAndPrize();
-  console.log('✓ seed hoàn tất');
+  console.log(force ? '✓ seed hoàn tất (FORCE — bổ sung data mới)' : '✓ seed hoàn tất (khởi tạo lần đầu)');
   await pool.end();
 }
 

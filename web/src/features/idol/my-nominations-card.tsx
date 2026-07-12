@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NeuButton, NeuCard } from '@/components/neu';
 import { EmptyState, Loading } from '@/components/state-views';
-import { colorForId, stripeStyle } from '@/lib/avatar';
+import { avatarStyle } from '@/lib/avatar';
 import type { IdolStatus } from '@/types/api';
 import { NominateDialog } from './nominate-dialog';
 import { useMyNominations } from './use-idol';
@@ -30,7 +30,7 @@ export function MyNominationsCard() {
         <div className="col" style={{ gap: 12 }}>
           {data.map((n) => (
             <NeuCard key={n.id} flat style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={stripeStyle(colorForId(n.id), 44)} />
+              <div style={avatarStyle(n.avatarUrl, n.id, 44)} />
               <span style={{ flex: 1, fontWeight: 600, fontSize: 15 }}>{n.name}</span>
               <span
                 className="mono"

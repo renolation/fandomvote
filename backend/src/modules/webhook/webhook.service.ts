@@ -1,17 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { Database, DRIZZLE } from '../../db/drizzle.provider';
 import { users } from '../../db/schema';
 import { BusinessException } from '../../common/exceptions/business.exception';
-import { DIAMOND_TO_GOLD } from '../../common/utils/money.util';
+import { DIAMOND_TO_GOLD, OFFERWALL_USD_TO_GOLD } from '../../common/utils/money.util';
 import { lockUser } from '../../common/utils/wallet-lock.util';
 import { IdempotencyService, WEBHOOK_TTL_SECONDS } from '../idempotency/idempotency.service';
 import { EventsService } from '../events/events.service';
 import { ReferralService } from '../referral/referral.service';
 import { LedgerService } from '../wallet/ledger.service';
-import { IapWebhookDto, OfferwallPostbackDto } from './dto/webhook.dto';
+import { IapWebhookDto, LootablyPostbackDto, OfferwallPostbackDto } from './dto/webhook.dto';
 
 // Verify TRƯỚC khi cộng tiền + chống replay theo transaction_id — §0.6/§10.
 @Injectable()
@@ -130,6 +130,46 @@ export class WebhookService {
       );
       const result = { credited: dto.diamondAmount, bonus };
       await this.idempotency.complete(tx, `iap:${dto.transactionId}`, result);
+      return result;
+    });
+  }
+
+  // Lootably postback (GET). Verify SHA256(userID+ip+revenue+currencyReward+SECRET); Gold = revenue×13.000.
+  async handleLootablyPostback(q: LootablyPostbackDto) {
+    const secret = this.config.get<string>('LOOTABLY_POSTBACK_SECRET') ?? '';
+    const ip = q.ip ?? '';
+    const expected = createHash('sha256')
+      .update(`${q.userID}${ip}${q.revenue}${q.currencyReward}${secret}`)
+      .digest('hex');
+    const a = Buffer.from(expected);
+    const b = Buffer.from(q.hash ?? '');
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      throw new BusinessException('SIGNATURE_INVALID', 'Chữ ký Lootably không hợp lệ');
+    }
+    const revenueUsd = Number(q.revenue);
+    const goldAmount = Number.isFinite(revenueUsd) ? Math.round(revenueUsd * OFFERWALL_USD_TO_GOLD) : 0;
+
+    return this.db.transaction(async (tx) => {
+      await lockUser(tx, q.userID);
+      const key = `lootably:${q.transactionID}`;
+      const begin = await this.idempotency.begin(tx, key, 'offerwall', q.userID, WEBHOOK_TTL_SECONDS);
+      if (begin.replay) return begin.response;
+
+      if (goldAmount > 0) {
+        await this.ledger.credit(tx, {
+          userId: q.userID,
+          currency: 'GOLD',
+          amount: goldAmount,
+          source: 'OFFERWALL',
+          realValueVnd: goldAmount, // 1 Gold = 1đ
+          refType: 'offerwall',
+          refId: q.transactionID,
+        });
+        await this.events.creditBestBonus(tx, q.userID, 'EARN_MULTIPLIER', 'GOLD', goldAmount, 'offerwall', q.transactionID);
+        await this.referral.onGoldEarned(tx, q.userID);
+      }
+      const result = { credited: goldAmount, offer: q.offerName ?? q.offerID ?? null };
+      await this.idempotency.complete(tx, key, result);
       return result;
     });
   }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NeuButton, NeuCard } from '@/components/neu';
 import { EmptyState, Loading } from '@/components/state-views';
-import { colorForId, stripeStyle } from '@/lib/avatar';
+import { avatarStyle } from '@/lib/avatar';
 import { useAuthGate } from '@/features/auth/use-auth-gate';
 import { FollowPickerDialog } from './follow-picker-dialog';
 import { useFollows, useToggleFollow } from './use-follow';
@@ -68,23 +68,7 @@ export function FollowedIdolsCard() {
               >
                 ✕
               </button>
-              <div
-                style={{
-                  margin: '0 auto',
-                  ...(idol.avatarUrl
-                    ? {
-                        width: 72,
-                        height: 72,
-                        flex: 'none',
-                        border: '3px solid var(--c-ink)',
-                        borderRadius: 14,
-                        backgroundImage: `url(${idol.avatarUrl})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }
-                    : stripeStyle(colorForId(idol.id), 72)),
-                }}
-              />
+              <div style={{ margin: '0 auto', ...avatarStyle(idol.avatarUrl, idol.id, 72) }} />
               <div style={{ fontSize: 13, fontWeight: 600, marginTop: 6, lineHeight: 1.2 }}>{idol.name}</div>
             </div>
           ))}

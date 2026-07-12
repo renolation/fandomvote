@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Ip, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthUser, CurrentUser } from '../../common/decorators/current-user.decorator';
 import { IdempotencyKey } from '../../common/decorators/idempotency-key.decorator';
@@ -38,9 +38,15 @@ export class ShopController {
 
   @Public()
   @Get('offers')
-  @ApiOperation({ summary: 'Danh mục offer wall (kiếm Gold)' })
+  @ApiOperation({ summary: 'Danh mục offer wall tĩnh (kiếm Gold) — fallback khi chưa đăng nhập' })
   offers() {
     return this.shop.listOffers();
+  }
+
+  @Get('offers/live')
+  @ApiOperation({ summary: 'Offer wall LIVE (Lootably) theo user hiện tại' })
+  liveOffers(@CurrentUser() user: AuthUser, @Ip() ip: string, @Headers('user-agent') userAgent: string) {
+    return this.shop.listLiveOffers(user.id, ip, userAgent);
   }
 
   @Public()

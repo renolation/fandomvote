@@ -17,6 +17,7 @@ import { addDays } from '../../common/utils/time.util';
 import { lockUser } from '../../common/utils/wallet-lock.util';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { LedgerService } from '../wallet/ledger.service';
+import { LiveOffer, LootablyService } from './lootably.service';
 
 export interface RedeemResult {
   giftItem: GiftWalletItem;
@@ -29,19 +30,37 @@ export class ShopService {
     @Inject(DRIZZLE) private readonly db: Database,
     private readonly ledger: LedgerService,
     private readonly idempotency: IdempotencyService,
+    private readonly lootably: LootablyService,
   ) {}
 
   async listDeals(): Promise<ShopDeal[]> {
     return this.db.select().from(shopDeals).where(eq(shopDeals.isActive, true));
   }
 
-  // Danh mục offer wall (đang active). Gold cộng qua webhook offerwall postback, không tại đây.
+  // Danh mục offer wall tĩnh (đang active). Gold cộng qua webhook offerwall postback, không tại đây.
   async listOffers(): Promise<OfferTask[]> {
     return this.db
       .select()
       .from(offerTasks)
       .where(eq(offerTasks.isActive, true))
       .orderBy(asc(offerTasks.sortOrder));
+  }
+
+  // Offer wall LIVE cho user hiện tại (Lootably). Chưa cấu hình / rỗng → fallback danh mục tĩnh.
+  async listLiveOffers(userId: string, ip: string, userAgent: string): Promise<LiveOffer[]> {
+    const live = await this.lootably.fetchOffers(userId, ip, userAgent);
+    if (live.length) return live;
+    const tasks = await this.listOffers();
+    return tasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      description: t.description ?? null,
+      imageUrl: null,
+      actionUrl: t.actionUrl ?? '',
+      rewardGold: t.rewardGold,
+      icon: t.icon,
+      iconBg: t.iconBg,
+    }));
   }
 
   // Gói nạp Diamond (đang active). Diamond chỉ cộng sau webhook IAP + receipt verify.

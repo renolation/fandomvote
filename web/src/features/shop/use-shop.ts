@@ -11,6 +11,12 @@ export function useOffers() {
   return useQuery({ queryKey: ['offers'], queryFn: shopApi.offers });
 }
 
+// Offer LIVE (Lootably) theo user — chỉ fetch khi đã đăng nhập.
+export function useLiveOffers() {
+  const { isAuthed } = useAuth();
+  return useQuery({ queryKey: ['offers-live'], queryFn: shopApi.liveOffers, enabled: isAuthed });
+}
+
 export function useIapPackages() {
   return useQuery({ queryKey: ['iap-packages'], queryFn: shopApi.iapPackages });
 }

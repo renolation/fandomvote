@@ -48,3 +48,16 @@ export class IapWebhookDto {
   @IsString()
   signature!: string;
 }
+
+// Lootably offerwall postback (GET query). Verify: SHA256(userID + ip + revenue + currencyReward + SECRET).
+export class LootablyPostbackDto {
+  @ApiProperty() @IsString() userID!: string;
+  @ApiPropertyOptional({ description: 'IP end-user do Lootably ghi (nằm trong hash)' })
+  @IsOptional() @IsString() ip?: string;
+  @ApiProperty({ description: 'Payout publisher (USD)' }) @IsString() revenue!: string;
+  @ApiProperty({ description: 'Số currency Lootably trả user' }) @IsString() currencyReward!: string;
+  @ApiProperty({ description: 'ID giao dịch (idempotency/replay)' }) @IsString() transactionID!: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() offerID?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() offerName?: string;
+  @ApiProperty({ description: 'SHA256 hash để verify' }) @IsString() hash!: string;
+}
