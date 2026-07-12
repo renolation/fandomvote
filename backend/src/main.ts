@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -9,7 +10,11 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Sau reverse proxy (Cloudflare/nginx): tin X-Forwarded-For để @Ip() lấy IP THẬT của client.
+  // Cần cho Lootably offerwall (target offer theo quốc gia); IP nội bộ (127.0.0.1/172.x) → 0 offer.
+  app.set('trust proxy', true);
 
   app.use(helmet());
   app.enableCors();
