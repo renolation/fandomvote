@@ -516,10 +516,9 @@ async function seedUpcomingCampaigns(): Promise<void> {
   console.log('• seed sắp diễn ra: 4 campaign DRAFT (open_at tương lai) + open_at cho CAMP_DRAFT');
 }
 
-// ===== Danh mục shop + sự kiện (offer wall, gói IAP, point events) =====
-// Seed VÔ ĐIỀU KIỆN + idempotent (onConflictDoNothing): guard của seedDemo bỏ qua khi DB
-// đã có demo, nên data thêm về sau (offer/iap/6 events) không vào được → luôn bổ sung ở đây.
-async function seedCatalog(): Promise<void> {
+// ===== DEMO promos: offer wall tĩnh + point events mẫu (chỉ khi SEED_DEMO=true) =====
+// Offer thật do Lootably cấp (live); đây chỉ là data mẫu để xem giao diện.
+async function seedDemoPromos(): Promise<void> {
   const now = new Date();
   const at = (days: number) => new Date(now.getTime() + days * 86400000);
 
@@ -530,16 +529,6 @@ async function seedCatalog(): Promise<void> {
       { id: '00000000-0000-4000-8000-000000000062', title: 'Hoàn thành khảo sát', icon: '📝', iconBg: '#3B82F6', rewardGold: 50, sortOrder: 2 },
       { id: '00000000-0000-4000-8000-000000000063', title: 'Mời bạn bè', icon: '👥', iconBg: '#22C55E', rewardGold: 100, sortOrder: 3 },
       { id: '00000000-0000-4000-8000-000000000064', title: 'Theo dõi fanpage', icon: '❤️', iconBg: '#FFD60A', rewardGold: 15, sortOrder: 4 },
-    ])
-    .onConflictDoNothing();
-
-  await db
-    .insert(iapPackages)
-    .values([
-      { id: '00000000-0000-4000-8000-000000000071', sku: 'dia_100', title: '100 Diamond', diamondAmount: 100, bonusDiamond: 0, priceVnd: 10000 },
-      { id: '00000000-0000-4000-8000-000000000072', sku: 'dia_550', title: '550 Diamond', diamondAmount: 500, bonusDiamond: 50, priceVnd: 50000 },
-      { id: '00000000-0000-4000-8000-000000000073', sku: 'dia_1200', title: '1.200 Diamond', diamondAmount: 1200, bonusDiamond: 0, priceVnd: 100000 },
-      { id: '00000000-0000-4000-8000-000000000074', sku: 'dia_6500', title: '6.500 Diamond', diamondAmount: 5000, bonusDiamond: 1500, priceVnd: 500000 },
     ])
     .onConflictDoNothing();
 
@@ -556,28 +545,64 @@ async function seedCatalog(): Promise<void> {
     ])
     .onConflictDoNothing();
 
-  console.log('• seed danh mục: 4 offer + 4 iap + 6 point_events (ongoing/upcoming/past)');
+  console.log('• seed demo promos: 4 offer tĩnh + 6 point_events');
+}
+
+// ESSENTIAL — luôn tạo khi init (KHÔNG phải demo): tài khoản admin + gói IAP (sản phẩm thật).
+// Admin đọc từ env ADMIN_EMAIL/ADMIN_USERNAME/ADMIN_PASSWORD (có default để chạy được ngay).
+async function seedEssential(): Promise<void> {
+  const email = process.env.ADMIN_EMAIL ?? 'admin@fdv.vn';
+  const username = process.env.ADMIN_USERNAME ?? 'admin';
+  const password = process.env.ADMIN_PASSWORD ?? 'password123';
+  const pwd = await argon2.hash(password);
+  await db
+    .insert(users)
+    .values({ id: ADMIN_ID, email, username, passwordHash: pwd, displayName: 'FDV Admin', role: 'ADMIN', emailVerifiedAt: new Date() })
+    .onConflictDoNothing();
+
+  // Gói nạp Diamond (IAP) — cấu hình sản phẩm thật, không phải demo.
+  await db
+    .insert(iapPackages)
+    .values([
+      { id: '00000000-0000-4000-8000-000000000071', sku: 'dia_100', title: '100 Diamond', diamondAmount: 100, bonusDiamond: 0, priceVnd: 10000 },
+      { id: '00000000-0000-4000-8000-000000000072', sku: 'dia_550', title: '550 Diamond', diamondAmount: 500, bonusDiamond: 50, priceVnd: 50000 },
+      { id: '00000000-0000-4000-8000-000000000073', sku: 'dia_1200', title: '1.200 Diamond', diamondAmount: 1200, bonusDiamond: 0, priceVnd: 100000 },
+      { id: '00000000-0000-4000-8000-000000000074', sku: 'dia_6500', title: '6.500 Diamond', diamondAmount: 5000, bonusDiamond: 1500, priceVnd: 500000 },
+    ])
+    .onConflictDoNothing();
+
+  const pwHint = process.env.ADMIN_PASSWORD ? '[từ ADMIN_PASSWORD]' : "'password123' [⚠ đặt ADMIN_PASSWORD để đổi]";
+  console.log(`• essential: admin '${username}' (${email}) ${pwHint} + 4 gói IAP`);
 }
 
 // Init-once (kiểu open-source): chỉ seed khi DB CHƯA khởi tạo (bảng platform_config trống).
-// Đã khởi tạo → bỏ qua toàn bộ. Ép seed lại (áp data thêm về sau) bằng SEED_FORCE=true / --force.
+// Mặc định chỉ seed ESSENTIAL (admin + config + IAP), KHÔNG có data demo.
+// Bật data demo (user/campaign/idol/offer mẫu) bằng SEED_DEMO=true. Ép chạy lại bằng SEED_FORCE=true.
 async function main(): Promise<void> {
   const force = process.env.SEED_FORCE === 'true' || process.argv.includes('--force');
+  const withDemo = process.env.SEED_DEMO === 'true';
   const initialized = (await db.select({ k: platformConfig.key }).from(platformConfig).limit(1)).length > 0;
   if (initialized && !force) {
-    console.log('• DB đã khởi tạo → bỏ qua seed. (SEED_FORCE=true để seed lại data mới.)');
+    console.log('• DB đã khởi tạo → bỏ qua seed. (SEED_FORCE=true để chạy lại.)');
     await pool.end();
     return;
   }
 
+  // ESSENTIAL — luôn chạy.
   await seedConfig();
-  await seedCatalog();
-  await seedDemo();
-  await seedMore();
-  await seedScenarios();
-  await seedUpcomingCampaigns();
-  await backfillUsernamesAndPrize();
-  console.log(force ? '✓ seed hoàn tất (FORCE — bổ sung data mới)' : '✓ seed hoàn tất (khởi tạo lần đầu)');
+  await seedEssential();
+
+  // DEMO — chỉ khi SEED_DEMO=true.
+  if (withDemo) {
+    await seedDemoPromos();
+    await seedDemo();
+    await seedMore();
+    await seedScenarios();
+    await seedUpcomingCampaigns();
+    await backfillUsernamesAndPrize();
+  }
+
+  console.log(withDemo ? '✓ seed hoàn tất (essential + DEMO)' : '✓ seed hoàn tất (essential — không có data demo)');
   await pool.end();
 }
 
