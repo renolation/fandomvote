@@ -64,7 +64,7 @@ export function OfferWall() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, fontSize: 15 }}>{o.title}</div>
               <div className="mono" style={{ fontWeight: 700, fontSize: 13, color: '#22a24b' }}>
-                +{formatNumber(o.rewardGold)} Gold
+                {o.rewardGold > 0 ? `+${formatNumber(o.rewardGold)} Gold` : 'Thưởng thay đổi'}
               </div>
             </div>
             <NeuButton variant="green" size="sm" onClick={() => start(o)}>

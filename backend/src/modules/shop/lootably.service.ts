@@ -4,6 +4,9 @@ import { OFFERWALL_USD_TO_GOLD } from '../../common/utils/money.util';
 
 const OFFERS_API_URL = 'https://api.lootably.com/api/v2/offers/get';
 
+// Loại nhạy cảm/tài chính — luôn loại khỏi offer wall (thẻ tín dụng, nạp tiền); không hợp app fandom VN.
+const BLOCKED_CATEGORIES = ['creditcard', 'deposit'];
+
 // Offer đã chuẩn hoá để hiển thị ở Shop (kiếm Gold).
 export interface LiveOffer {
   id: string;
@@ -27,6 +30,7 @@ interface LootablyOffer {
   link?: string;
   revenue?: number | string;
   goals?: Array<{ revenue?: number | string }>;
+  categories?: string[];
 }
 interface LootablyOffersResponse {
   data?: { offers?: LootablyOffer[] };
@@ -80,8 +84,19 @@ export class LootablyService {
         return [];
       }
       const json = (await res.json()) as LootablyOffersResponse;
-      const offers = json.data?.offers ?? json.offers ?? [];
-      return offers
+      const raw = json.data?.offers ?? json.offers ?? [];
+      // Lọc loại offer: allowlist (env LOOTABLY_CATEGORIES, mặc định 'survey,signup') + bỏ BLOCKED.
+      const allow = (this.config.get<string>('LOOTABLY_CATEGORIES') ?? 'survey,signup')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const selected = raw.filter((o) => {
+        const cats = o.categories ?? [];
+        const okAllow = allow.length === 0 || cats.some((c) => allow.includes(c));
+        const okBlock = !cats.some((c) => BLOCKED_CATEGORIES.includes(c));
+        return okAllow && okBlock;
+      });
+      return selected
         .map((o) => ({
           id: String(o.offerID),
           title: String(o.name ?? 'Offer'),
@@ -90,7 +105,7 @@ export class LootablyService {
           actionUrl: String(o.link ?? ''),
           rewardGold: this.goldForUsd(this.offerRevenueUsd(o)),
         }))
-        .filter((o) => o.actionUrl.length > 0 && o.rewardGold > 0);
+        .filter((o) => o.actionUrl.length > 0); // giữ cả survey thưởng biến động (rewardGold=0)
     } catch (e) {
       this.log.error(`Lootably offers fetch failed: ${(e as Error).message}`);
       return [];
