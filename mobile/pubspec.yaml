@@ -1,0 +1,35 @@
+name: fdv_mobile
+description: "FandomVote mobile (Flutter) — user app: Vote · Shop · Profile. Client mỏng, mọi logic ở backend."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # State management (chọn 1, dùng xuyên suốt — §1)
+  flutter_riverpod: ^2.6.1
+  # Network + interceptor (JWT, refresh, unwrap {data}, Idempotency-Key)
+  dio: ^5.7.0
+  # Token an toàn (không log token — §2)
+  flutter_secure_storage: ^9.2.2
+  # Điều hướng + auth guard
+  go_router: ^14.6.2
+  # Font Space Grotesk / Inter / JetBrains Mono (§9)
+  google_fonts: ^6.2.1
+  # Đăng nhập Google (idToken → POST /auth/google)
+  google_sign_in: ^6.2.2
+  # UUID cho Idempotency-Key (§0.7)
+  uuid: ^4.5.1
+  # Mở link offer wall (Lootably) ra trình duyệt ngoài
+  url_launcher: ^6.3.1
+  # Rewarded video ad (AdMob) — thay offer wall
+  google_mobile_ads: ^5.2.0
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

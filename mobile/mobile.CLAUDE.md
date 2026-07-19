@@ -40,7 +40,8 @@ mobile/lib/
 - Endpoint: `register`, `login`, `google`, `refresh`, `logout`, `GET /auth/me`.
 - **Đăng ký email/SĐT:** `POST /auth/register` (email **hoặc** phone + password + displayName, `referralCode` optional = userId).
 - **Gmail:** `POST /auth/google { idToken, referralCode? }` — popup điền mã mời TRƯỚC khi vào app, có thể bỏ qua.
-- **Verify email/SĐT (gate referral):** `POST /auth/verify/request { channel: EMAIL|PHONE }` → màn nhập OTP → `POST /auth/verify/confirm { channel, otp }`. **Referrer + referee chỉ nhận 500 Green SAU khi referee verify** → UI nhắc verify; hiển thị trạng thái từ API.
+- **Verify email/SĐT:** `POST /auth/verify/request { channel: EMAIL|PHONE }` → màn nhập OTP → `POST /auth/verify/confirm { channel, otp }` (xác thực tài khoản).
+- **Referral (model mới — thưởng GOLD theo mốc lũy kế):** mã mời = userId; điền lúc đăng ký (optional, **1 lần, không sửa**). **Cả referrer + referee nhận 500 GOLD khi referee tự kiếm đủ 500 Gold lũy kế** (video/nhiệm vụ/offerwall) — KHÔNG phải khi verify, KHÔNG phải Green. Ô/popup nhập mã PHẢI hiển thị rule này; trạng thái lấy từ `GET /referrals/me`, không tự suy.
 
 ---
 
@@ -63,7 +64,8 @@ mobile/lib/
 - Leaderboard `GET /campaigns/:id/leaderboard` (poll 5–10s) → `[{ campaignIdolId, idolId, name, avatarUrl, totalVotes, reachedValueAt }]`. Nhiều campaign song song.
 - Form vote: nhập N → `POST /votes { campaignIdolId, amount }` + header `Idempotency-Key` (uuid). Disable nút khi gửi. Response `{ greenSpent, goldSpent, newTotal, balance }` → hiển thị "Green trừ trước → Gold sau", **không tự trừ**. Refetch balance + leaderboard.
 - Nút **📋 Thể lệ**: render `rules_content` của `GET /campaigns/:id`.
-- Campaign `CLOSED/RESOLVED` → khóa vote. Kết quả `GET /campaigns/:id/result` → `{ campaign, snapshot[], receipt }`: **A** (đạt mốc → Vote LED) `receipt=null`; **B** (trượt) có `receipt.fundVnd`.
+- Campaign `CLOSED/RESOLVED` → khóa vote. Kết quả `GET /campaigns/:id/result` → `{ campaign, snapshot[], receipt }`: **A** (đạt mốc → Vote LED) `receipt=null`; **B** (trượt) có biên lai quỹ **per-user** (`receipt` của chính user: `goldVoted`, `donatedVnd`); **C** (song song A/B) thư an ủi fan hạng 2+.
+- **Bảng xếp hạng USER** (1 hàng DƯỚI bảng idol, dạng carousel): **Top Voter** (Σ vote Green+Gold) / **Top Earner** (Gold cày được) × khung **NGÀY/TUẦN/THÁNG**. *(Phase 4 — backend chưa có endpoint, spec ở §12.)*
 
 ## 6. Đề cử idol
 - Nhập tên → `GET /idols/check?name=` real-time (debounce): `{ duplicate, idol? }` → trùng chặn + gợi ý vote; chưa có → `POST /idols/nominate { name, aliases?, avatarUrl? }` → PENDING. Có thể nhận `IDOL_DUPLICATE` (race) → xử như trùng.
@@ -77,7 +79,7 @@ mobile/lib/
 - **Offer Wall / video**: Gold chỉ cộng sau S2S postback verify ở backend — app không cộng theo SDK báo.
 
 ## 8. Profile
-Info cá nhân (`GET /auth/me`: avatar, tên, fandom) · Ví (§4) · **Ví Quà** · Mã mời · Đề cử của tôi · Hoạt động vote · Notification · Information · Cài đặt.
+Info cá nhân (`GET /auth/me`: avatar, tên, fandom) · Ví (§4) · **Ví Quà** · Mã mời · Đề cử của tôi · Hoạt động vote · **Xếp hạng của tôi** (vị trí Top Voter/Earner — Phase 4) · Notification · Information · Cài đặt.
 - **Ví Quà:** `GET /shop/gifts`. DIGITAL: `POST /shop/gifts/:id/use` (ACTIVE→USED, hiện mã/QR). PHYSICAL: `POST /shop/gifts/:id/confirm { shippingAddressId }` (PENDING→CONFIRMED) — cần `GET/POST /shop/addresses` trước. Physical quá hạn xác nhận → EXPIRED, **không hoàn điểm** — UI cảnh báo trước hạn.
 - **Mã mời:** `GET /referrals/me` → `{ referralCode (=userId), totalInvited, totalRewarded }`.
 - **Hoạt động vote:** `GET /votes/activity?limit=&cursor=`.
@@ -110,7 +112,7 @@ Info cá nhân (`GET /auth/me`: avatar, tên, fandom) · Ví (§4) · **Ví Quà
 - **1 Vote:** leaderboard, form vote, đề cử idol + check trùng, thể lệ, referral đăng ký.
 - **2 Shop:** daily reward → IAP → special deals + ví quà (offerwall mock), banner point event.
 - **3 Profile:** ví+ledger, ví quà, mã mời, đề cử của tôi, hoạt động vote, notification, information, settings.
-- **4 Nâng cao:** màn resolution A/B/C, Vote LED, biên lai quỹ.
+- **4 Nâng cao:** màn resolution A/B/C, Vote LED, biên lai quỹ (per-user), **bảng xếp hạng user (Top Voter/Earner) + xếp hạng của tôi**.
 - **Native:** hoàn thiện app, push notification FCM/APNs.
 
 ---
@@ -130,8 +132,9 @@ Info cá nhân (`GET /auth/me`: avatar, tên, fandom) · Ví (§4) · **Ví Quà
 | Shop | `GET /shop/deals` · `POST /shop/deals/:id/redeem` 🔒🔑 · `GET /shop/daily-reward` · `POST /shop/daily-reward/claim` 🔒 · `GET /shop/gifts` 🔒 · `POST /shop/gifts/:id/use` 🔒 · `/shop/gifts/:id/confirm` 🔒 · `GET/POST /shop/addresses` 🔒 |
 | Events | `GET /events/active` |
 | Notification | `GET /notifications` 🔒 · `/notifications/unread-count` 🔒 · `PATCH /notifications/:id/read` 🔒 · `/notifications/read-all` 🔒 |
+| Leaderboard *(Phase 4 — spec, chưa implement)* | `GET /leaderboards?type=TOP_VOTER\|TOP_EARNER&period=DAY\|WEEK\|MONTH` · `GET /leaderboards/me` 🔒 |
 
 **Cursor pagination:** query `?limit=&cursor=` → `{ items: [...], nextCursor: string | null }` (ledger, notifications, vote activity, idols).
 
 **Mã lỗi → gợi ý hiển thị:**
-`INSUFFICIENT_BALANCE` (không đủ điểm) · `GREEN_CAP_EXCEEDED` (vượt trần Green/ngày) · `CAMPAIGN_NOT_OPEN` / `CAMPAIGN_CLOSED` · `IDOL_DUPLICATE` · `OUT_OF_STOCK` · `DEAL_INACTIVE` · `ALREADY_CLAIMED` (đã điểm danh) · `IN_PROGRESS` (đang xử lý — retry) · `REPLAY_DETECTED` · `SELF_REFERRAL` / `REFERRAL_LIMIT` · `INVALID_CREDENTIALS` · `TOKEN_INVALID` / `TOKEN_REUSE_DETECTED` (→ login lại) · `ACCOUNT_FLAGGED` (khoá chi tiêu) · `INVALID_STATE` · `VALIDATION_ERROR` · `NOT_FOUND`. HTTP **429** = rate limit.
+`INSUFFICIENT_BALANCE` (không đủ điểm) · `GREEN_CAP_EXCEEDED` (vượt trần Green/ngày) · `CAMPAIGN_NOT_OPEN` / `CAMPAIGN_CLOSED` · `IDOL_DUPLICATE` · `OUT_OF_STOCK` · `DEAL_INACTIVE` · `ALREADY_CLAIMED` (đã điểm danh) · `IN_PROGRESS` (đang xử lý — retry) · `REPLAY_DETECTED` · `SELF_REFERRAL` / `REFERRAL_LIMIT` · `INVALID_CREDENTIALS` · `TOKEN_INVALID` / `TOKEN_REUSE_DETECTED` (→ login lại) · `ACCOUNT_FLAGGED` (khoá chi tiêu) · `INVALID_STATE` · `VALIDATION_ERROR` · `FORBIDDEN` / `NOT_FOUND`. HTTP **429** = rate limit.
