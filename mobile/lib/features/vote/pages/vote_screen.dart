@@ -24,15 +24,27 @@ class _VoteScreenState extends ConsumerState<VoteScreen> {
   @override
   Widget build(BuildContext context) {
     final camps = ref.watch(campaignsProvider);
+    final upcoming = ref.watch(upcomingCampaignsProvider).valueOrNull ?? [];
     return camps.when(
       loading: () => const Loading(),
       error: (e, _) => ErrorState(e, onRetry: () => ref.invalidate(campaignsProvider)),
       data: (list) {
-        if (list.isEmpty) return const EmptyState('Chưa có chiến dịch đang mở.');
+        if (list.isEmpty) {
+          // Chưa mở campaign nào nhưng có campaign đã hẹn giờ → vẫn cho xem "Sắp diễn ra".
+          if (upcoming.isEmpty) return const EmptyState('Chưa có chiến dịch đang mở.');
+          return RefreshIndicator(
+            onRefresh: () async => ref.invalidate(upcomingCampaignsProvider),
+            child: ListView(padding: const EdgeInsets.all(14), children: [
+              const EmptyState('Chưa có chiến dịch đang mở.'),
+              _UpcomingSection(list: upcoming),
+            ]),
+          );
+        }
         final selected = list.firstWhere((c) => c.id == _selectedId, orElse: () => list.first);
         return RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(campaignsProvider);
+            ref.invalidate(upcomingCampaignsProvider);
             ref.invalidate(leaderboardProvider(selected.id));
           },
           child: ListView(padding: const EdgeInsets.all(14), children: [
@@ -68,6 +80,7 @@ class _VoteScreenState extends ConsumerState<VoteScreen> {
             ]),
             const SizedBox(height: 14),
             _Board(campaign: selected),
+            if (upcoming.isNotEmpty) _UpcomingSection(list: upcoming),
           ]),
         );
       },
@@ -137,7 +150,7 @@ class _Board extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: NeuCard(Row(children: [
                   SizedBox(width: 26, child: Text('${i + 1}', style: monoFont(size: 15))),
-                  idolAvatar(entries[i].idolId, entries[i].avatarUrl, size: 44),
+                  avatarBox(entries[i].idolId, entries[i].avatarUrl, size: 44),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -145,7 +158,8 @@ class _Board extends ConsumerWidget {
                       Text('${formatNumber(entries[i].totalVotes)} ⭐', style: monoFont(size: 13, color: Colors.grey.shade700)),
                     ]),
                   ),
-                  if (campaign.isOpen)
+                  // isVotable: OPEN và đã tới open_at — campaign hẹn giờ chưa mở thì không có nút VOTE.
+                  if (campaign.isVotable)
                     NeuButton('VOTE', color: Neu.yellow, onPressed: () => openVoteSheet(context, ref, campaign, entries[i])),
                 ])),
               ),
@@ -153,5 +167,38 @@ class _Board extends ConsumerWidget {
         );
       },
     );
+  }
+}
+
+// "Sắp diễn ra": campaign đã hẹn giờ nhưng chưa tới open_at — chỉ xem + đếm ngược, không bình chọn.
+class _UpcomingSection extends StatelessWidget {
+  final List<Campaign> list;
+  const _UpcomingSection({required this.list});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const SizedBox(height: 18),
+      Text('🔜 Sắp diễn ra', style: headFont(size: 16)),
+      const SizedBox(height: 10),
+      for (final c in list)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: NeuCard(Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(c.title, style: headFont(size: 15)),
+                Text('Mở lúc ${formatDate(c.openAt)}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              ]),
+            ),
+            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text('BẮT ĐẦU SAU', style: monoFont(size: 9)),
+              Text(countdownLabel(parseDate(c.openAt), now), style: monoFont(size: 14, color: Neu.pink)),
+            ]),
+          ])),
+        ),
+    ]);
   }
 }

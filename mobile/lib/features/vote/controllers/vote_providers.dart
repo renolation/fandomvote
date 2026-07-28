@@ -23,6 +23,15 @@ final campaignsProvider = StreamProvider.autoDispose<List<Campaign>>((ref) async
   }
 });
 
+// Campaign hẹn giờ chưa tới open_at. Backend đã loại khỏi ?status=OPEN nên phải lấy danh sách đầy đủ
+// rồi lọc theo isUpcoming; sắp xếp theo giờ mở gần nhất trước.
+final upcomingCampaignsProvider = FutureProvider.autoDispose<List<Campaign>>((ref) async {
+  final all = await ref.watch(apiProvider).campaigns();
+  final upcoming = all.where((c) => c.isUpcoming).toList();
+  upcoming.sort((a, b) => (a.openAt ?? '').compareTo(b.openAt ?? ''));
+  return upcoming;
+});
+
 final leaderboardProvider =
     StreamProvider.autoDispose.family<List<LeaderboardEntry>, String>((ref, campaignId) async* {
   final api = ref.watch(apiProvider);

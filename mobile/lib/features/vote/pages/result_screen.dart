@@ -71,7 +71,7 @@ class ResultScreen extends ConsumerWidget {
           padding: const EdgeInsets.only(bottom: 10),
           child: NeuCard(shadowOffset: 3, Row(children: [
             SizedBox(width: 24, child: Text('${i + 1}', style: monoFont(size: 15))),
-            idolAvatar(r.snapshot[i].idolId, r.snapshot[i].avatarUrl, size: 40),
+            avatarBox(r.snapshot[i].idolId, r.snapshot[i].avatarUrl, size: 40),
             const SizedBox(width: 10),
             Expanded(child: Text(r.snapshot[i].name, style: headFont(size: 14))),
             Text('${formatNumber(r.snapshot[i].totalVotes)} ⭐', style: monoFont(size: 13)),

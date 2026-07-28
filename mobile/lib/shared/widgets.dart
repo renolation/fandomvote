@@ -14,8 +14,8 @@ Color colorForId(String id) {
   return _palette[h % _palette.length];
 }
 
-// Avatar idol: ảnh thật nếu có avatarUrl, ngược lại ô màu placeholder (khung neubrutalism).
-Widget idolAvatar(String id, String? avatarUrl, {double size = 46}) => Container(
+// Ô avatar dùng chung (idol + user): có ảnh → ảnh, chưa có → màu theo id.
+Widget avatarBox(String id, String? avatarUrl, {double size = 46}) => Container(
       width: size,
       height: size,
       decoration: BoxDecoration(

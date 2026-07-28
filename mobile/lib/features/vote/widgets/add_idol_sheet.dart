@@ -100,7 +100,7 @@ class _AddIdolSheetState extends ConsumerState<_AddIdolSheet> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(children: [
-                    idolAvatar(idol.id, idol.avatarUrl, size: 40),
+                    avatarBox(idol.id, idol.avatarUrl, size: 40),
                     const SizedBox(width: 10),
                     Expanded(child: Text(idol.name, style: headFont(size: 14))),
                     NeuButton('Thêm', color: Neu.green, textColor: Colors.white, onPressed: () => _add(idol)),

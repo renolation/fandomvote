@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../../shared/widgets.dart';
+import '../../auth/controllers/session_controller.dart';
 import '../../common_providers.dart';
 import '../../profile/pages/profile_screen.dart';
 import '../../shop/pages/shop_screen.dart';
@@ -21,6 +22,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final unread = ref.watch(unreadCountProvider).valueOrNull ?? 0;
+    final user = ref.watch(sessionProvider).user;
     return Scaffold(
       body: SafeArea(
         bottom: false,
@@ -45,6 +47,15 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                     ),
                   ),
               ]),
+              // Avatar user ở header (như web) — bấm vào mở tab Hồ sơ.
+              if (user != null)
+                GestureDetector(
+                  onTap: () => setState(() => _index = 2),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 2, right: 6),
+                    child: avatarBox(user.id, user.avatarUrl, size: 36),
+                  ),
+                ),
             ]),
           ),
           Expanded(child: IndexedStack(index: _index, children: _pages)),

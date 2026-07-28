@@ -1,3 +1,4 @@
+import '../../core/format.dart' show parseDate;
 import '../../core/json.dart';
 
 class Campaign {
@@ -27,6 +28,17 @@ class Campaign {
 
   bool get isOpen => status == 'OPEN';
   bool get isEnded => status == 'CLOSED' || status == 'RESOLVING' || status == 'RESOLVED' || status == 'ARCHIVED';
+
+  // Đã hẹn giờ nhưng chưa tới open_at → "Sắp diễn ra": xem được, chưa bình chọn được.
+  // Cùng quy tắc với backend (GET /campaigns?status=OPEN đã loại, POST /votes trả CAMPAIGN_NOT_OPEN).
+  bool get isUpcoming {
+    if (status != 'DRAFT' && status != 'OPEN') return false;
+    final start = parseDate(openAt);
+    return start != null && start.isAfter(DateTime.now());
+  }
+
+  // Bình chọn được: OPEN và đã tới giờ mở.
+  bool get isVotable => isOpen && !isUpcoming;
 
   factory Campaign.fromJson(Map<String, dynamic> j) => Campaign(
         id: asString(j['id']),
