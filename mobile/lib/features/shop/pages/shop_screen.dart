@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../api/models/shop.dart';
 import '../../../core/format.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme.dart';
@@ -17,7 +18,7 @@ class ShopScreen extends ConsumerWidget {
       onRefresh: () async {
         ref.invalidate(activeEventsProvider);
         ref.invalidate(dailyRewardProvider);
-        ref.invalidate(dailyClaimedProvider);
+        ref.invalidate(dailyStatusProvider);
         ref.invalidate(iapProvider);
         ref.invalidate(dealsProvider);
       },
@@ -67,13 +68,15 @@ class _DailyCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tiers = ref.watch(dailyRewardProvider).valueOrNull ?? [];
-    final claimed = ref.watch(dailyClaimedProvider).valueOrNull ?? false;
+    final status = ref.watch(dailyStatusProvider).valueOrNull;
+    final claimed = status?.claimedToday ?? false;
+    final currentDay = status?.dayIndex ?? 1; // ngày chuỗi hôm nay (streak)
 
     Future<void> claim() async {
       try {
         await ref.read(apiProvider).claimDaily();
         ref.invalidate(balanceProvider);
-        ref.invalidate(dailyClaimedProvider);
+        ref.invalidate(dailyStatusProvider);
         if (context.mounted) showOk(context, 'Điểm danh thành công!');
       } catch (e) {
         if (context.mounted) showError(context, e);
@@ -85,20 +88,44 @@ class _DailyCard extends ConsumerWidget {
       const SizedBox(height: 12),
       Wrap(spacing: 8, runSpacing: 8, children: [
         for (final t in tiers)
-          Container(
-            width: 64,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Neu.ink, width: 2)),
-            child: Column(children: [
-              Text('Ngày ${t.dayIndex}', style: monoFont(size: 10)),
-              Text('+${t.greenAmount}', style: monoFont(size: 13)),
-            ]),
+          // Ngày đã qua trong chuỗi: xanh ✓ · ngày hiện tại chưa nhận: vàng · ngày tương lai: trắng.
+          _DayTile(
+            tier: t,
+            done: t.dayIndex < currentDay || (t.dayIndex == currentDay && claimed),
+            active: t.dayIndex == currentDay && !claimed,
           ),
       ]),
       const SizedBox(height: 12),
       NeuButton(claimed ? '✓ Đã điểm danh' : 'Điểm danh nhận Green',
           expand: true, color: claimed ? Neu.white : Neu.green, onPressed: claimed ? null : claim),
     ]));
+  }
+}
+
+// 1 ô ngày trong dải điểm danh.
+class _DayTile extends StatelessWidget {
+  const _DayTile({required this.tier, required this.done, required this.active});
+  final DailyRewardTier tier;
+  final bool done;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = done ? Neu.green : (active ? Neu.yellow : Neu.white);
+    final fg = done ? Colors.white : Neu.ink;
+    return Container(
+      width: 64,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Neu.ink, width: 2),
+      ),
+      child: Column(children: [
+        Text('Ngày ${tier.dayIndex}', style: monoFont(size: 10, color: fg)),
+        Text(done ? '✓' : '+${tier.greenAmount}', style: monoFont(size: 13, color: fg)),
+      ]),
+    );
   }
 }
 

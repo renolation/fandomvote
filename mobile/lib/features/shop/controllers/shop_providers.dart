@@ -5,4 +5,4 @@ final dealsProvider = FutureProvider.autoDispose((ref) => ref.watch(apiProvider)
 final iapProvider = FutureProvider.autoDispose((ref) => ref.watch(apiProvider).iapPackages());
 final liveOffersProvider = FutureProvider.autoDispose((ref) => ref.watch(apiProvider).liveOffers());
 final dailyRewardProvider = FutureProvider.autoDispose((ref) => ref.watch(apiProvider).dailyReward());
-final dailyClaimedProvider = FutureProvider.autoDispose((ref) => ref.watch(apiProvider).dailyClaimedToday());
+final dailyStatusProvider = FutureProvider.autoDispose((ref) => ref.watch(apiProvider).dailyStatus());

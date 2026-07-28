@@ -22,8 +22,10 @@ export const shopApi = {
       idempotencyKey: newIdempotencyKey(),
     }),
   dailyRewardConfig: () => api.get<DailyRewardConfig[]>('/shop/daily-reward'),
-  dailyRewardStatus: () => api.get<{ claimedToday: boolean }>('/shop/daily-reward/status'),
-  claimDaily: () => api.post<{ greenAwarded: number }>('/shop/daily-reward/claim'),
+  // dayIndex = ngày chuỗi đã nhận hôm nay, hoặc ngày sẽ nhận nếu điểm danh bây giờ.
+  dailyRewardStatus: () =>
+    api.get<{ claimedToday: boolean; dayIndex: number }>('/shop/daily-reward/status'),
+  claimDaily: () => api.post<{ greenAwarded: number; dayIndex: number }>('/shop/daily-reward/claim'),
   gifts: () => api.get<GiftWalletItem[]>('/shop/gifts'),
   useGift: (id: string) => api.post<GiftWalletItem>(`/shop/gifts/${id}/use`),
   confirmGift: (id: string, shippingAddressId: string) =>

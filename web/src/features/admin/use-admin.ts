@@ -1,5 +1,12 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Campaign, CreateCampaignBody, UpdateCampaignBody, UpdateUserBody } from '@/types/api';
+import type {
+  Campaign,
+  CreateCampaignBody,
+  CreateDealBody,
+  UpdateCampaignBody,
+  UpdateDealBody,
+  UpdateUserBody,
+} from '@/types/api';
 import { adminApi, type ResolutionResult } from './admin-api';
 
 export function useAdminUsers(search: string, flaggedOnly: boolean) {
@@ -39,6 +46,33 @@ export function usePendingIdols() {
 
 export function useAnalyticsOverview() {
   return useQuery({ queryKey: ['admin-analytics'], queryFn: adminApi.analyticsOverview });
+}
+
+// ---- Special deals (CRUD) ----
+export function useAdminDeals() {
+  return useQuery({ queryKey: ['admin-deals'], queryFn: adminApi.deals });
+}
+
+// Sau khi tạo/sửa: invalidate cả list admin và list shop của user.
+function invalidateDeals(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ['admin-deals'] });
+  qc.invalidateQueries({ queryKey: ['deals'] });
+}
+
+export function useCreateDeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateDealBody) => adminApi.createDeal(body),
+    onSuccess: () => invalidateDeals(qc),
+  });
+}
+
+export function useUpdateDeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; body: UpdateDealBody }) => adminApi.updateDeal(v.id, v.body),
+    onSuccess: () => invalidateDeals(qc),
+  });
 }
 
 // ---- Đơn hàng PHYSICAL ----
@@ -128,7 +162,7 @@ const DELETE_CONFIG: Record<DeleteEntity, { fn: (id: string) => Promise<unknown>
   user: { fn: adminApi.deleteUser, invalidate: 'admin-users' },
   campaign: { fn: adminApi.deleteCampaign, invalidate: 'campaigns' },
   idol: { fn: adminApi.deleteIdol, invalidate: 'admin-pending-idols' },
-  deal: { fn: adminApi.deleteDeal, invalidate: 'deals' },
+  deal: { fn: adminApi.deleteDeal, invalidate: 'admin-deals' },
   offer: { fn: adminApi.deleteOffer, invalidate: 'offers' },
   iapPackage: { fn: adminApi.deleteIapPackage, invalidate: 'iap-packages' },
   pointEvent: { fn: adminApi.deletePointEvent, invalidate: 'events' },

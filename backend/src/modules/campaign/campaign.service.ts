@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, desc, eq, gte, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import { Database, DRIZZLE } from '../../db/drizzle.provider';
 import { DbOrTx } from '../../db/types';
 import {
@@ -73,7 +73,22 @@ export class CampaignService {
     return rows[0];
   }
 
+  // status=OPEN nghĩa là "đang mở để vote": loại campaign hẹn giờ chưa tới open_at
+  // (admin sửa open_at về tương lai cho campaign đã OPEN) → trang vote không hiện, chỉ nằm ở "Sắp tới".
+  // Bỏ trống status = mọi campaign (trang Sự kiện tự chia nhóm theo open_at/close_at).
   async list(status?: Campaign['status']): Promise<Campaign[]> {
+    if (status === 'OPEN') {
+      return this.db
+        .select()
+        .from(campaigns)
+        .where(
+          and(
+            eq(campaigns.status, 'OPEN'),
+            or(isNull(campaigns.openAt), lte(campaigns.openAt, new Date())),
+          ),
+        )
+        .orderBy(desc(campaigns.createdAt));
+    }
     if (status) {
       return this.db.select().from(campaigns).where(eq(campaigns.status, status)).orderBy(desc(campaigns.createdAt));
     }
@@ -187,6 +202,18 @@ export class CampaignService {
       .where(and(eq(donationReceipts.campaignId, campaignId), eq(donationReceipts.userId, userId)))
       .limit(1);
     return rows[0] ?? null;
+  }
+
+  // Scheduler: DRAFT→OPEN khi tới open_at — cho phép admin hẹn giờ campaign ("Sắp tới" → tự mở).
+  // Giữ nguyên open_at đã hẹn (không ghi đè bằng giờ chạy cron) để mốc bắt đầu đúng như admin đặt.
+  // open_at NULL → không tự mở (phải bấm "Mở campaign" thủ công).
+  async openDueCampaigns(): Promise<number> {
+    const rows = await this.db
+      .update(campaigns)
+      .set({ status: 'OPEN', updatedAt: new Date() })
+      .where(and(eq(campaigns.status, 'DRAFT'), lte(campaigns.openAt, new Date())))
+      .returning({ id: campaigns.id });
+    return rows.length;
   }
 
   // Scheduler: OPEN→CLOSED khi quá close_at + snapshot idempotent — §6/§16.

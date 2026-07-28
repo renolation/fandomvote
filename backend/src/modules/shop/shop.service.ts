@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { Database, DRIZZLE } from '../../db/drizzle.provider';
-import { asc, eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 import {
   GiftWalletItem,
   IapPackage,
@@ -15,8 +15,10 @@ import {
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { addDays } from '../../common/utils/time.util';
 import { lockUser } from '../../common/utils/wallet-lock.util';
+import { AuditService } from '../audit/audit.service';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { LedgerService } from '../wallet/ledger.service';
+import { CreateDealDto, UpdateDealDto } from './dto/deal.dto';
 import { LiveOffer, LootablyService } from './lootably.service';
 
 export interface RedeemResult {
@@ -31,10 +33,56 @@ export class ShopService {
     private readonly ledger: LedgerService,
     private readonly idempotency: IdempotencyService,
     private readonly lootably: LootablyService,
+    private readonly audit: AuditService,
   ) {}
 
   async listDeals(): Promise<ShopDeal[]> {
     return this.db.select().from(shopDeals).where(eq(shopDeals.isActive, true));
+  }
+
+  // ===== Admin CRUD deal =====
+
+  // Admin thấy CẢ deal đã tắt (isActive=false) để bật lại/sửa.
+  async listAllDeals(): Promise<ShopDeal[]> {
+    return this.db.select().from(shopDeals).orderBy(desc(shopDeals.createdAt));
+  }
+
+  async createDeal(adminId: string, dto: CreateDealDto): Promise<ShopDeal> {
+    const rows = await this.db
+      .insert(shopDeals)
+      .values({
+        title: dto.title,
+        description: dto.description,
+        partnerId: dto.partnerId,
+        cost: dto.cost,
+        currency: dto.currency,
+        itemType: dto.itemType,
+        stock: dto.stock,
+        validityDays: dto.validityDays,
+        isActive: dto.isActive ?? true,
+      })
+      .returning();
+    await this.audit.record(adminId, 'deal.create', 'deal', rows[0].id, { title: dto.title });
+    return rows[0];
+  }
+
+  // Chỉ cập nhật field được gửi. stock_sold không nằm trong DTO → không thể ghi đè số đã đổi.
+  async updateDeal(adminId: string, id: string, dto: UpdateDealDto): Promise<ShopDeal> {
+    const patch: Partial<typeof shopDeals.$inferInsert> = { updatedAt: new Date() };
+    if (dto.title !== undefined) patch.title = dto.title;
+    if (dto.description !== undefined) patch.description = dto.description;
+    if (dto.partnerId !== undefined) patch.partnerId = dto.partnerId;
+    if (dto.cost !== undefined) patch.cost = dto.cost;
+    if (dto.currency !== undefined) patch.currency = dto.currency;
+    if (dto.itemType !== undefined) patch.itemType = dto.itemType;
+    if (dto.stock !== undefined) patch.stock = dto.stock;
+    if (dto.validityDays !== undefined) patch.validityDays = dto.validityDays;
+    if (dto.isActive !== undefined) patch.isActive = dto.isActive;
+
+    const rows = await this.db.update(shopDeals).set(patch).where(eq(shopDeals.id, id)).returning();
+    if (rows.length === 0) throw new BusinessException('NOT_FOUND', 'Deal không tồn tại');
+    await this.audit.record(adminId, 'deal.update', 'deal', id);
+    return rows[0];
   }
 
   // Danh mục offer wall tĩnh (đang active). Gold cộng qua webhook offerwall postback, không tại đây.

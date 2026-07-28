@@ -4,7 +4,8 @@ import { useToast } from '@/components/toast';
 import { useAuthGate } from '@/features/auth/use-auth-gate';
 import { useClaimDaily, useDailyRewardConfig, useDailyRewardStatus } from './use-shop';
 
-// Dải 7 ngày điểm danh. Ngày 1 = hôm nay: vàng (chưa điểm danh) → xanh ✓ (đã điểm danh).
+// Dải 7 ngày điểm danh theo chuỗi thật (streak từ backend).
+// Ngày đã qua trong chuỗi: xanh ✓ · ngày hiện tại chưa nhận: vàng · ngày tương lai: trắng.
 export function DailyRewardCard() {
   const { data: config, isLoading } = useDailyRewardConfig();
   const { data: status } = useDailyRewardStatus();
@@ -13,19 +14,20 @@ export function DailyRewardCard() {
   const gate = useAuthGate();
 
   const claimedToday = !!status?.claimedToday;
+  const currentDay = status?.dayIndex ?? 1; // ngày chuỗi hôm nay (đã nhận, hoặc sẽ nhận)
 
   const onClaim = () =>
     gate(async () => {
       try {
         const r = await claim.mutateAsync();
-        toast.success(`+${r.greenAwarded} Green · điểm danh!`);
+        toast.success(`+${r.greenAwarded} Green · điểm danh ngày ${r.dayIndex}!`);
       } catch (e) {
         toast.error(e);
       }
     });
 
   const days = config ?? [];
-  const todayAmount = days[0]?.greenAmount ?? 0;
+  const todayAmount = days.find((d) => d.dayIndex === currentDay)?.greenAmount ?? 0;
 
   return (
     <NeuCard>
@@ -38,9 +40,11 @@ export function DailyRewardCard() {
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: 8, flex: 1, minWidth: 240 }}>
             {days.map((d) => {
-              const isToday = d.dayIndex === 1; // demo: chưa có streak thật → ngày 1 = hôm nay
-              const done = isToday && claimedToday;
-              const bg = done ? 'var(--c-green)' : isToday ? 'var(--c-yellow)' : 'var(--c-white)';
+              const isToday = d.dayIndex === currentDay;
+              // Ngày trước ngày hiện tại đã nhận rồi; ngày hiện tại chỉ xong khi đã điểm danh.
+              const done = d.dayIndex < currentDay || (isToday && claimedToday);
+              const active = isToday && !claimedToday;
+              const bg = done ? 'var(--c-green)' : active ? 'var(--c-yellow)' : 'var(--c-white)';
               const fg = done ? '#fff' : '#000';
               return (
                 <div

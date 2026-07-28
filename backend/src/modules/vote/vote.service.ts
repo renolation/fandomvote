@@ -55,8 +55,13 @@ export class VoteService {
       const campaign = cRows[0];
       if (!campaign) throw new BusinessException('NOT_FOUND', 'Campaign không tồn tại');
       const overdue = campaign.closeAt ? campaign.closeAt.getTime() <= Date.now() : false;
-      if (campaign.status !== 'OPEN' || overdue) {
-        throw new BusinessException('CAMPAIGN_NOT_OPEN', 'Campaign không mở để vote');
+      // Chưa tới open_at (campaign hẹn giờ) → chưa được vote, dù status đã OPEN.
+      const notStarted = campaign.openAt ? campaign.openAt.getTime() > Date.now() : false;
+      if (campaign.status !== 'OPEN' || overdue || notStarted) {
+        throw new BusinessException(
+          'CAMPAIGN_NOT_OPEN',
+          notStarted ? 'Campaign chưa bắt đầu' : 'Campaign không mở để vote',
+        );
       }
 
       // 2. Balance check SAU lock (Green chưa hết hạn + Gold). Diamond KHÔNG vote trực tiếp.

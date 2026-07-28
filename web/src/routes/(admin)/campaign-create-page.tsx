@@ -15,6 +15,7 @@ export function AdminCampaignCreatePage() {
     prize: '',
     starGoal: 1000,
     donationPercent: 50,
+    openAt: '',
     closeAt: '',
   });
 
@@ -28,6 +29,7 @@ export function AdminCampaignCreatePage() {
         prize: form.prize || undefined,
         starGoal: form.starGoal,
         donationRatioBps: Math.round(form.donationPercent * 100), // % → basis points
+        openAt: form.openAt ? new Date(form.openAt).toISOString() : undefined,
         closeAt: form.closeAt ? new Date(form.closeAt).toISOString() : undefined,
       });
       toast.success('Đã tạo chiến dịch (DRAFT).');
@@ -80,6 +82,14 @@ export function AdminCampaignCreatePage() {
               max={100}
               value={form.donationPercent}
               onChange={(e) => setForm({ ...form, donationPercent: Number(e.target.value) || 0 })}
+            />
+          </NeuField>
+          {/* Ngày bắt đầu — campaign chưa tới thời điểm này hiện ở mục "sắp diễn ra". */}
+          <NeuField label="Bắt đầu lúc (tuỳ chọn)">
+            <NeuInput
+              type="datetime-local"
+              value={form.openAt}
+              onChange={(e) => setForm({ ...form, openAt: e.target.value })}
             />
           </NeuField>
           <NeuField label="Đóng lúc (tuỳ chọn)">

@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { DbOrTx } from '../../db/types';
 import { greenDailyCounter, ledgerSourceEnum } from '../../db/schema';
 import { BusinessException } from '../../common/exceptions/business.exception';
-import { vnDateString, vnEndOfDay } from '../../common/utils/time.util';
+import { addDays, vnDateString, vnEndOfDay } from '../../common/utils/time.util';
 import { PlatformConfigService } from '../platform-config/platform-config.service';
 import { LedgerService } from './ledger.service';
 
@@ -80,8 +80,8 @@ export class GreenCounterService {
     });
   }
 
-  // Check-in 1 lần/ngày — set cờ, đã set → ALREADY_CLAIMED (§16).
-  async claimCheckin(tx: DbOrTx, userId: string): Promise<void> {
+  // Check-in 1 lần/ngày — set cờ + ngày thứ mấy trong chuỗi, đã set → ALREADY_CLAIMED (§16).
+  async claimCheckin(tx: DbOrTx, userId: string, dayIndex: number): Promise<void> {
     const date = vnDateString();
     const cur = await tx
       .select()
@@ -94,12 +94,29 @@ export class GreenCounterService {
     if (cur.length) {
       await tx
         .update(greenDailyCounter)
-        .set({ checkinClaimedAt: new Date() })
+        .set({ checkinClaimedAt: new Date(), checkinDayIndex: dayIndex })
         .where(and(eq(greenDailyCounter.userId, userId), eq(greenDailyCounter.date, date)));
     } else {
-      await tx
-        .insert(greenDailyCounter)
-        .values({ userId, date, greenEarnedToday: 0, checkinClaimedAt: new Date() });
+      await tx.insert(greenDailyCounter).values({
+        userId,
+        date,
+        greenEarnedToday: 0,
+        checkinClaimedAt: new Date(),
+        checkinDayIndex: dayIndex,
+      });
     }
+  }
+
+  // Ngày chuỗi kế tiếp của user: row hôm qua có check-in → +1 (hết chu kỳ thì quay về 1); ngắt → 1.
+  async nextStreakDay(tx: DbOrTx, userId: string, maxDay: number): Promise<number> {
+    const yesterday = vnDateString(addDays(-1));
+    const rows = await tx
+      .select({ day: greenDailyCounter.checkinDayIndex, at: greenDailyCounter.checkinClaimedAt })
+      .from(greenDailyCounter)
+      .where(and(eq(greenDailyCounter.userId, userId), eq(greenDailyCounter.date, yesterday)))
+      .limit(1);
+    if (!rows.length || !rows[0].at) return 1; // hôm qua không điểm danh → chuỗi đứt
+    const prev = rows[0].day ?? 1;
+    return prev >= maxDay ? 1 : prev + 1; // hết chu kỳ → vòng lại ngày 1
   }
 }

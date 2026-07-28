@@ -533,6 +533,23 @@ export interface UpdateCampaignBody {
   openAt?: string | null;
   closeAt?: string | null;
 }
+// Deal chỉ dùng GOLD | DIAMOND (GREEN không đổi quà).
+export type DealCurrency = 'GOLD' | 'DIAMOND';
+
+export interface CreateDealBody {
+  title: string;
+  description?: string;
+  partnerId?: string;
+  cost: number;
+  currency: DealCurrency;
+  itemType: GiftItemType;
+  stock: number;
+  validityDays?: number;
+  isActive?: boolean;
+}
+
+export type UpdateDealBody = Partial<CreateDealBody>;
+
 export interface UpdateProfileBody {
   avatarUrl?: string;
   displayName?: string;

@@ -11,6 +11,8 @@ import { UserService } from '../user/user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { VoteService } from '../vote/vote.service';
 import { GiftWalletService } from '../shop/gift-wallet.service';
+import { ShopService } from '../shop/shop.service';
+import { CreateDealDto, UpdateDealDto } from '../shop/dto/deal.dto';
 import { ReconcileService } from '../reconcile/reconcile.service';
 import { AdminDeleteService } from './admin-delete.service';
 
@@ -27,6 +29,7 @@ export class AdminController {
     private readonly vote: VoteService,
     private readonly user: UserService,
     private readonly giftWallet: GiftWalletService,
+    private readonly shop: ShopService,
     private readonly reconcile: ReconcileService,
     private readonly adminDelete: AdminDeleteService,
   ) {}
@@ -118,6 +121,26 @@ export class AdminController {
   @ApiOperation({ summary: 'Hủy campaign → hoàn vote (Gold→Gold, Green→Green mới)' })
   reverseVotes(@CurrentUser() admin: AuthUser, @Param('id') id: string) {
     return this.vote.reverseCampaignVotes(admin.id, id);
+  }
+
+  // ===== Special deals (quà đối tác) =====
+
+  @Get('deals')
+  @ApiOperation({ summary: 'Liệt kê deal (gồm cả deal đã tắt)' })
+  listDeals() {
+    return this.shop.listAllDeals();
+  }
+
+  @Post('deals')
+  @ApiOperation({ summary: 'Tạo deal' })
+  createDeal(@CurrentUser() admin: AuthUser, @Body() dto: CreateDealDto) {
+    return this.shop.createDeal(admin.id, dto);
+  }
+
+  @Post('deals/:id/update')
+  @ApiOperation({ summary: 'Sửa deal' })
+  updateDeal(@CurrentUser() admin: AuthUser, @Param('id') id: string, @Body() dto: UpdateDealDto) {
+    return this.shop.updateDeal(admin.id, id, dto);
   }
 
   // ===== Đơn hàng quà PHYSICAL =====

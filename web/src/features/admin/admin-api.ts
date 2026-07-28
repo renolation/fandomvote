@@ -6,11 +6,14 @@ import type {
   AnalyticsOverview,
   Campaign,
   CreateCampaignBody,
+  CreateDealBody,
   Idol,
   IdolStatus,
   Paginated,
   ReconcileSummary,
+  ShopDeal,
   UpdateCampaignBody,
+  UpdateDealBody,
   UpdateUserBody,
 } from '@/types/api';
 
@@ -47,6 +50,11 @@ export const adminApi = {
     api.post<AdminUser>(`/admin/users/${id}/update`, body),
 
   // Đơn hàng PHYSICAL — fulfilment.
+  // Deal (gồm cả deal đã tắt — khác /shop/deals chỉ trả deal active).
+  deals: () => api.get<ShopDeal[]>('/admin/deals'),
+  createDeal: (body: CreateDealBody) => api.post<ShopDeal>('/admin/deals', body),
+  updateDeal: (id: string, body: UpdateDealBody) =>
+    api.post<ShopDeal>(`/admin/deals/${id}/update`, body),
   orders: (status?: string) => api.get<AdminOrder[]>('/admin/orders', { params: { status } }),
   shipOrder: (id: string) => api.post<AdminOrder>(`/admin/orders/${id}/ship`),
   deliverOrder: (id: string) => api.post<AdminOrder>(`/admin/orders/${id}/deliver`),

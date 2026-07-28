@@ -25,9 +25,12 @@ function CampaignEventModalInner({ campaign, onClose }: { campaign: Campaign; on
   const period =
     campaign.openAt || campaign.closeAt ? `${formatDate(campaign.openAt)} – ${formatDate(campaign.closeAt)}` : null;
 
-  // CTA theo trạng thái: OPEN → vào bình chọn; RESOLVED → xem kết quả; sắp mở (DRAFT) → không có.
+  // Chưa tới open_at → backend chặn vote, nên không mời "Vào bình chọn" (tránh bấm vào rồi báo lỗi).
+  const notStarted = campaign.openAt !== null && new Date(campaign.openAt).getTime() > Date.now();
+
+  // CTA theo trạng thái: OPEN (đã tới giờ) → vào bình chọn; RESOLVED → xem kết quả; sắp diễn ra → không có.
   const cta =
-    campaign.status === 'OPEN'
+    campaign.status === 'OPEN' && !notStarted
       ? { label: '⭐ Vào bình chọn', variant: 'green' as const }
       : campaign.status === 'RESOLVED'
         ? { label: '🏁 Xem kết quả', variant: 'blue' as const }

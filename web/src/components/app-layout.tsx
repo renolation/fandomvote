@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { colorForId, stripeStyle } from '@/lib/avatar';
+import { avatarStyle } from '@/lib/avatar';
 import { formatNumber } from '@/lib/format';
 import { useAuth } from '@/features/auth/auth-context';
 import { useBalance } from '@/features/wallet/use-wallet';
@@ -97,7 +97,11 @@ export function AppLayout() {
                   </span>
                 ))}
                 <NotificationBell />
-                <div className="app-avatar" style={stripeStyle(colorForId(user.id), 42)} title={user.displayName} />
+                <div
+                  className="app-avatar"
+                  style={avatarStyle(user.avatarUrl, user.id, 42)}
+                  title={user.displayName}
+                />
               </>
             ) : (
               <NavLink to="/login" style={navBtn(false)}>

@@ -108,9 +108,10 @@ class ApiService {
   Future<void> redeemDeal(String id) => _c.post('/shop/deals/$id/redeem', idempotencyKey: newIdempotencyKey());
   Future<List<DailyRewardTier>> dailyReward() async =>
       _list(await _c.get('/shop/daily-reward')).map(DailyRewardTier.fromJson).toList();
-  Future<bool> dailyClaimedToday() async {
-    final r = await _c.get('/shop/daily-reward/status');
-    return asBool(_map(r)['claimedToday']);
+  // Trạng thái điểm danh: đã nhận hôm nay chưa + đang ở ngày thứ mấy của chuỗi (streak).
+  Future<DailyStatus> dailyStatus() async {
+    final m = _map(await _c.get('/shop/daily-reward/status'));
+    return DailyStatus(claimedToday: asBool(m['claimedToday']), dayIndex: asInt(m['dayIndex'], 1));
   }
 
   Future<void> claimDaily() => _c.post('/shop/daily-reward/claim');

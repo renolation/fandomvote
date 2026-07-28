@@ -22,11 +22,13 @@ export class ScheduledTasksService {
     private readonly analytics: AnalyticsService,
   ) {}
 
-  // OPEN→CLOSED khi quá close_at + snapshot (atomic, idempotent).
+  // DRAFT→OPEN khi tới open_at (campaign hẹn giờ) + OPEN→CLOSED khi quá close_at + snapshot.
   @Cron(CronExpression.EVERY_MINUTE)
-  async closeDueCampaigns(): Promise<void> {
-    const n = await this.campaign.closeDueCampaigns();
-    if (n > 0) this.logger.log(`Đóng ${n} campaign quá hạn`);
+  async rotateCampaigns(): Promise<void> {
+    const opened = await this.campaign.openDueCampaigns();
+    if (opened > 0) this.logger.log(`Mở ${opened} campaign tới giờ`);
+    const closed = await this.campaign.closeDueCampaigns();
+    if (closed > 0) this.logger.log(`Đóng ${closed} campaign quá hạn`);
   }
 
   // Dọn idempotency key hết hạn.

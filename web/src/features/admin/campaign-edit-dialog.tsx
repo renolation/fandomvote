@@ -21,6 +21,7 @@ export function CampaignEditDialog({ campaign, open, onClose }: { campaign: Camp
   const [rulesContent, setRulesContent] = useState(campaign.rulesContent ?? '');
   const [starGoal, setStarGoal] = useState(String(campaign.starGoal));
   const [donationPct, setDonationPct] = useState(String(campaign.donationRatioBps / 100));
+  const [openAt, setOpenAt] = useState(toLocalInput(campaign.openAt));
   const [closeAt, setCloseAt] = useState(toLocalInput(campaign.closeAt));
 
   const submit = async () => {
@@ -32,6 +33,7 @@ export function CampaignEditDialog({ campaign, open, onClose }: { campaign: Camp
         rulesContent: rulesContent.trim() || undefined,
         starGoal: Math.max(1, parseInt(starGoal, 10) || campaign.starGoal),
         donationRatioBps: Math.min(10000, Math.max(0, Math.round((parseFloat(donationPct) || 0) * 100))),
+        openAt: openAt ? new Date(openAt).toISOString() : null,
         closeAt: closeAt ? new Date(closeAt).toISOString() : null,
       };
       await update.mutateAsync({ id: campaign.id, body });
@@ -67,6 +69,10 @@ export function CampaignEditDialog({ campaign, open, onClose }: { campaign: Camp
       </NeuField>
       <NeuField label="Tỉ lệ quỹ (%)">
         <NeuInput inputMode="numeric" value={donationPct} onChange={(e) => setDonationPct(e.target.value)} />
+      </NeuField>
+      {/* Ngày bắt đầu — campaign chưa tới thời điểm này hiện ở mục "sắp diễn ra". */}
+      <NeuField label="Thời điểm bắt đầu">
+        <NeuInput type="datetime-local" value={openAt} onChange={(e) => setOpenAt(e.target.value)} />
       </NeuField>
       <NeuField label="Thời điểm đóng">
         <NeuInput type="datetime-local" value={closeAt} onChange={(e) => setCloseAt(e.target.value)} />

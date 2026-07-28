@@ -41,6 +41,13 @@ class DailyRewardTier {
       DailyRewardTier(asInt(j['dayIndex']), asInt(j['greenAmount']));
 }
 
+// Trạng thái điểm danh: dayIndex = ngày chuỗi đã nhận hôm nay, hoặc ngày sẽ nhận nếu điểm danh bây giờ.
+class DailyStatus {
+  final bool claimedToday;
+  final int dayIndex;
+  const DailyStatus({required this.claimedToday, required this.dayIndex});
+}
+
 class IapPackage {
   final String id;
   final String sku;

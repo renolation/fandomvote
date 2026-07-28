@@ -32,7 +32,7 @@ const EVENT_ICON: Record<PointEvent['type'], string> = {
 
 const SECTIONS: { bucket: Bucket; title: string }[] = [
   { bucket: 'ongoing', title: '🟢 Đang diễn ra' },
-  { bucket: 'upcoming', title: '🔜 Sắp tới' },
+  { bucket: 'upcoming', title: '🔜 Sắp diễn ra' },
   { bucket: 'past', title: '✅ Đã diễn ra' },
 ];
 
@@ -62,16 +62,19 @@ function mapPointEvent(e: PointEvent, now: number): FeedItem {
 }
 
 function mapCampaign(c: Campaign, now: number): FeedItem | null {
+  // Chưa tới open_at → "Sắp diễn ra" (đếm ngược tới giờ mở), kể cả khi status đã OPEN do admin hẹn lại giờ.
+  // Cùng quy tắc với backend: GET /campaigns?status=OPEN đã loại campaign chưa tới giờ → trang vote không hiện.
+  const notStarted = c.openAt !== null && new Date(c.openAt).getTime() > now;
   let bucket: Bucket | null = null;
   let countdownIso: string | null = null;
-  if (c.status === 'OPEN') {
+  if (notStarted && (c.status === 'DRAFT' || c.status === 'OPEN')) {
+    bucket = 'upcoming';
+    countdownIso = c.openAt;
+  } else if (c.status === 'OPEN') {
     bucket = 'ongoing';
     countdownIso = c.closeAt;
   } else if (c.status === 'RESOLVED') {
     bucket = 'past';
-  } else if (c.status === 'DRAFT' && c.openAt && new Date(c.openAt).getTime() > now) {
-    bucket = 'upcoming';
-    countdownIso = c.openAt;
   }
   if (!bucket) return null;
   return {
