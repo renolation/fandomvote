@@ -18,4 +18,15 @@ export class PlatformConfigService {
     if (rows.length === 0) return fallback;
     return rows[0].value as T;
   }
+
+  // Upsert 1 key (admin sửa cấu hình). description chỉ ghi khi được truyền, tránh xoá mô tả cũ.
+  async set(key: string, value: unknown, description?: string): Promise<void> {
+    await this.db
+      .insert(platformConfig)
+      .values({ key, value, description })
+      .onConflictDoUpdate({
+        target: platformConfig.key,
+        set: { value, updatedAt: new Date(), ...(description ? { description } : {}) },
+      });
+  }
 }

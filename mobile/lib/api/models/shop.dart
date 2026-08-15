@@ -3,6 +3,7 @@ import '../../core/json.dart';
 class Deal {
   final String id;
   final String title;
+  final String? imageUrl; // null → vẽ ô màu theo id
   final int cost;
   final String currency; // GOLD|DIAMOND
   final String itemType; // DIGITAL|PHYSICAL
@@ -12,6 +13,7 @@ class Deal {
   const Deal({
     required this.id,
     required this.title,
+    this.imageUrl,
     required this.cost,
     required this.currency,
     required this.itemType,
@@ -25,6 +27,7 @@ class Deal {
   factory Deal.fromJson(Map<String, dynamic> j) => Deal(
         id: asString(j['id']),
         title: asString(j['title']),
+        imageUrl: asStrOrNull(j['imageUrl']),
         cost: asInt(j['cost']),
         currency: asString(j['currency'], 'GOLD'),
         itemType: asString(j['itemType'], 'DIGITAL'),
@@ -46,6 +49,50 @@ class DailyStatus {
   final bool claimedToday;
   final int dayIndex;
   const DailyStatus({required this.claimedToday, required this.dayIndex});
+}
+
+// Xem rewarded ad nhận Gold. Số Gold do SERVER tính (giá 1 lượt × tỉ lệ admin đặt) — client chỉ hiển thị.
+class AdRewardStatus {
+  final int goldPerView;
+  final int valueVnd; // giá trị 1 lượt xem (VND)
+  final int ratioBps; // tỉ lệ trả về user: 10000 = 100%
+  final int dailyCap;
+  final int cooldownSeconds;
+  final int viewsToday;
+  final int remainingToday;
+  final String? nextAvailableAt; // còn cooldown → thời điểm được xem tiếp
+
+  const AdRewardStatus({
+    required this.goldPerView,
+    required this.valueVnd,
+    required this.ratioBps,
+    required this.dailyCap,
+    required this.cooldownSeconds,
+    required this.viewsToday,
+    required this.remainingToday,
+    this.nextAvailableAt,
+  });
+
+  factory AdRewardStatus.fromJson(Map<String, dynamic> j) => AdRewardStatus(
+        goldPerView: asInt(j['goldPerView']),
+        valueVnd: asInt(j['valueVnd']),
+        ratioBps: asInt(j['ratioBps']),
+        dailyCap: asInt(j['dailyCap']),
+        cooldownSeconds: asInt(j['cooldownSeconds']),
+        viewsToday: asInt(j['viewsToday']),
+        remainingToday: asInt(j['remainingToday']),
+        nextAvailableAt: asStrOrNull(j['nextAvailableAt']),
+      );
+}
+
+// Kết quả sau khi xem xong 1 lượt (server đã ghi ledger).
+class AdRewardResult {
+  final int goldAwarded;
+  final int remainingToday;
+  const AdRewardResult(this.goldAwarded, this.remainingToday);
+
+  factory AdRewardResult.fromJson(Map<String, dynamic> j) =>
+      AdRewardResult(asInt(j['goldAwarded']), asInt(j['remainingToday']));
 }
 
 class IapPackage {

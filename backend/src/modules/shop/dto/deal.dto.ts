@@ -25,6 +25,11 @@ export class CreateDealDto {
   @IsString()
   description?: string;
 
+  @ApiPropertyOptional({ description: 'URL ảnh quà (trả về từ POST /uploads)' })
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
   @ApiPropertyOptional({ description: 'ID đối tác cung cấp quà' })
   @IsOptional()
   @IsUUID()
@@ -72,6 +77,11 @@ export class UpdateDealDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional({ description: 'URL ảnh quà (trả về từ POST /uploads)' })
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

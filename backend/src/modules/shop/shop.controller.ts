@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger
 import { AuthUser, CurrentUser } from '../../common/decorators/current-user.decorator';
 import { IdempotencyKey } from '../../common/decorators/idempotency-key.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { AdRewardService } from './ad-reward.service';
 import { DailyRewardService } from './daily-reward.service';
 import { GiftWalletService } from './gift-wallet.service';
 import { ShopService } from './shop.service';
@@ -16,7 +17,21 @@ export class ShopController {
     private readonly shop: ShopService,
     private readonly dailyReward: DailyRewardService,
     private readonly gift: GiftWalletService,
+    private readonly adReward: AdRewardService,
   ) {}
+
+  @Get('ads/status')
+  @ApiOperation({ summary: 'Xem quảng cáo nhận Gold: cấu hình + hạn mức còn lại hôm nay' })
+  adStatus(@CurrentUser() user: AuthUser) {
+    return this.adReward.status(user.id);
+  }
+
+  @Post('ads/reward')
+  @ApiOperation({ summary: 'Xem xong rewarded ad → cộng Gold (số Gold do server tính; chưa có AdMob SSV)' })
+  @ApiHeader({ name: 'Idempotency-Key', required: true })
+  claimAdReward(@CurrentUser() user: AuthUser, @IdempotencyKey(true) key: string) {
+    return this.adReward.claim(user.id, key);
+  }
 
   @Public()
   @Get('deals')

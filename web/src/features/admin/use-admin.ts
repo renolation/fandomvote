@@ -3,6 +3,7 @@ import type {
   Campaign,
   CreateCampaignBody,
   CreateDealBody,
+  UpdateAdConfigBody,
   UpdateCampaignBody,
   UpdateDealBody,
   UpdateUserBody,
@@ -89,6 +90,19 @@ export function useOrderAction() {
     mutationFn: (v: { id: string; action: 'ship' | 'deliver' }) =>
       v.action === 'ship' ? adminApi.shipOrder(v.id) : adminApi.deliverOrder(v.id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-orders'] }),
+  });
+}
+
+// ---- Thưởng xem quảng cáo (rewarded ad) ----
+export function useAdConfig() {
+  return useQuery({ queryKey: ['admin-ad-config'], queryFn: adminApi.adConfig });
+}
+
+export function useUpdateAdConfig() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateAdConfigBody) => adminApi.updateAdConfig(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-ad-config'] }),
   });
 }
 

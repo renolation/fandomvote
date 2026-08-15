@@ -1,4 +1,4 @@
-package com.fandomvote.fdv_mobile
+package com.fandomvote.app
 
 import io.flutter.embedding.android.FlutterActivity
 

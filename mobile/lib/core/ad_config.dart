@@ -11,11 +11,23 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatf
 ///
 /// LƯU Ý: App ID (bên dưới) KHÔNG dùng trong code — khai báo ở
 /// `android/app/src/main/AndroidManifest.xml` và `ios/Runner/Info.plist`.
+///
+/// Test ID lấy từ tài liệu chính thức của Google (đã đối chiếu):
+/// https://developers.google.com/admob/flutter/rewarded (rewarded)
+/// https://developers.google.com/admob/android/test-ads · .../ios/test-ads (các loại còn lại)
 class AdConfig {
   AdConfig._();
 
   /// true = test ID (dev). false = ID thật (prod).
   static const bool useTestAds = true;
+
+  /// Xem xong quảng cáo có gọi backend cộng Gold hay không.
+  /// false = chỉ xem ads + thông báo đã xem (test luồng hiển thị).
+  /// true  = gọi POST /shop/ads/reward để server cộng Gold.
+  ///
+  /// SỐ GOLD DO SERVER QUYẾT (platform_config: ads.reward_value_vnd × ads.reward_ratio_bps),
+  /// client chỉ hiển thị số server trả về → đổi mức thưởng KHÔNG cần build lại app.
+  static const bool creditGoldAfterView = true;
 
   static bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
 

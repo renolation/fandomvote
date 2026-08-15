@@ -3,6 +3,7 @@ import type {
   AdminLedgerRow,
   AdminOrder,
   AdminUser,
+  AdRewardConfig,
   AnalyticsOverview,
   Campaign,
   CreateCampaignBody,
@@ -12,6 +13,7 @@ import type {
   Paginated,
   ReconcileSummary,
   ShopDeal,
+  UpdateAdConfigBody,
   UpdateCampaignBody,
   UpdateDealBody,
   UpdateUserBody,
@@ -49,12 +51,17 @@ export const adminApi = {
   updateUser: (id: string, body: UpdateUserBody) =>
     api.post<AdminUser>(`/admin/users/${id}/update`, body),
 
-  // Đơn hàng PHYSICAL — fulfilment.
   // Deal (gồm cả deal đã tắt — khác /shop/deals chỉ trả deal active).
   deals: () => api.get<ShopDeal[]>('/admin/deals'),
   createDeal: (body: CreateDealBody) => api.post<ShopDeal>('/admin/deals', body),
   updateDeal: (id: string, body: UpdateDealBody) =>
     api.post<ShopDeal>(`/admin/deals/${id}/update`, body),
+
+  // Thưởng xem quảng cáo (rewarded ad) — server tính Gold theo cấu hình này.
+  adConfig: () => api.get<AdRewardConfig>('/admin/ads/config'),
+  updateAdConfig: (body: UpdateAdConfigBody) => api.post<AdRewardConfig>('/admin/ads/config', body),
+
+  // Đơn hàng PHYSICAL — fulfilment.
   orders: (status?: string) => api.get<AdminOrder[]>('/admin/orders', { params: { status } }),
   shipOrder: (id: string) => api.post<AdminOrder>(`/admin/orders/${id}/ship`),
   deliverOrder: (id: string) => api.post<AdminOrder>(`/admin/orders/${id}/deliver`),

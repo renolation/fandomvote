@@ -53,6 +53,7 @@ export class ShopService {
       .values({
         title: dto.title,
         description: dto.description,
+        imageUrl: dto.imageUrl,
         partnerId: dto.partnerId,
         cost: dto.cost,
         currency: dto.currency,
@@ -71,6 +72,7 @@ export class ShopService {
     const patch: Partial<typeof shopDeals.$inferInsert> = { updatedAt: new Date() };
     if (dto.title !== undefined) patch.title = dto.title;
     if (dto.description !== undefined) patch.description = dto.description;
+    if (dto.imageUrl !== undefined) patch.imageUrl = dto.imageUrl;
     if (dto.partnerId !== undefined) patch.partnerId = dto.partnerId;
     if (dto.cost !== undefined) patch.cost = dto.cost;
     if (dto.currency !== undefined) patch.currency = dto.currency;

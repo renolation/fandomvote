@@ -1,15 +1,28 @@
-import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
-import type { Response } from 'express';
+import { Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { IapWebhookDto, LootablyPostbackDto, OfferwallPostbackDto } from './dto/webhook.dto';
+import { AdmobSsvService } from './admob-ssv.service';
 import { WebhookService } from './webhook.service';
 
 // Public (xác thực bằng signature, không JWT). Không throttle theo user.
 @ApiTags('webhook')
 @Controller('webhooks')
 export class WebhookController {
-  constructor(private readonly webhook: WebhookService) {}
+  constructor(
+    private readonly webhook: WebhookService,
+    private readonly admobSsv: AdmobSsvService,
+  ) {}
+
+  // AdMob SSV: cần query string THÔ để verify chữ ký → lấy từ req.originalUrl, không dùng @Query().
+  @Public()
+  @Get('admob/ssv')
+  @ApiOperation({ summary: 'AdMob SSV callback (GET, verify chữ ký ECDSA của Google) → Gold' })
+  admobSsvCallback(@Req() req: Request) {
+    const qi = req.originalUrl.indexOf('?');
+    return this.admobSsv.handleCallback(qi >= 0 ? req.originalUrl.slice(qi + 1) : '');
+  }
 
   @Public()
   @Post('offerwall')

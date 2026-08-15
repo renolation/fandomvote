@@ -36,6 +36,16 @@ const CONFIGS: Array<{ key: string; value: unknown; description: string }> = [
   { key: 'referral.max_rewarded', value: 50, description: 'Trần lượt mời được thưởng/user' },
   { key: 'daily.checkin_green', value: 50, description: 'Green check-in mặc định' },
   { key: 'contact.admin', value: { email: 'support@fdv.vn', zalo: '' }, description: 'Liên hệ admin' },
+  // Thưởng xem rewarded ad (AdMob). value_vnd tạm cố định; sau này lấy từ eCPM ngày trước qua AdMob API.
+  { key: 'ads.reward_value_vnd', value: 200, description: 'Giá 1 lượt xem rewarded ad (VND)' },
+  { key: 'ads.reward_ratio_bps', value: 10000, description: 'Tỉ lệ Gold trả về user (bps, 10000 = 100%)' },
+  { key: 'ads.daily_view_cap', value: 10, description: 'Trần lượt xem được thưởng mỗi ngày (UTC+7)' },
+  { key: 'ads.cooldown_seconds', value: 30, description: 'Giãn cách tối thiểu giữa 2 lượt xem (giây)' },
+  {
+    key: 'ads.ssv_enabled',
+    value: false,
+    description: 'true = chỉ cộng Gold qua AdMob SSV (chặn đường client tự báo)',
+  },
 ];
 
 const DAILY_REWARDS = [

@@ -4,6 +4,7 @@ import { NeuButton, NeuPill } from '@/components/neu';
 import { EmptyState, ErrorState, Loading } from '@/components/state-views';
 import { colorForId } from '@/lib/avatar';
 import { formatNumber } from '@/lib/format';
+import { AdRewardConfigCard } from '@/features/admin/ad-reward-config-card';
 import { DealEditDialog } from '@/features/admin/deal-edit-dialog';
 import { useAdminDeals, useDeleteAdmin } from '@/features/admin/use-admin';
 import type { ShopDeal } from '@/types/api';
@@ -18,6 +19,8 @@ export function AdminShopPage() {
 
   return (
     <>
+      <AdRewardConfigCard />
+
       <div style={{ background: 'var(--c-white)', border: '3px solid var(--c-ink)', borderRadius: 12, boxShadow: '5px 5px 0 var(--c-ink)', overflow: 'hidden' }}>
         <div className="spread" style={{ padding: '16px 20px', borderBottom: '3px solid var(--c-ink)' }}>
           <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 17 }}>🎁 Special Deals (đối tác)</span>
@@ -37,7 +40,12 @@ export function AdminShopPage() {
               const c = colorForId(d.id);
               return (
                 <div key={d.id} style={{ display: 'grid', gridTemplateColumns: COLS, gap: 12, padding: '13px 20px', borderBottom: '2px solid #efe9dc', alignItems: 'center', opacity: d.isActive ? 1 : 0.55 }}>
-                  <div style={{ width: 48, height: 40, border: '2px solid var(--c-ink)', borderRadius: 8, background: `repeating-linear-gradient(45deg, ${c}, ${c} 6px, #0a0a0a 6px, #0a0a0a 9px)` }} />
+                  {/* Có ảnh → hiện ảnh; chưa có → ô sọc theo id như cũ. */}
+                  {d.imageUrl ? (
+                    <img src={d.imageUrl} alt={d.title} style={{ width: 48, height: 40, objectFit: 'cover', border: '2px solid var(--c-ink)', borderRadius: 8 }} />
+                  ) : (
+                    <div style={{ width: 48, height: 40, border: '2px solid var(--c-ink)', borderRadius: 8, background: `repeating-linear-gradient(45deg, ${c}, ${c} 6px, #0a0a0a 6px, #0a0a0a 9px)` }} />
+                  )}
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{d.title}</div>
                   <div className="mono" style={{ fontWeight: 700, fontSize: 13 }}>{formatNumber(d.cost)} {d.currency === 'GOLD' ? '🟡' : '💎'}</div>
                   <div className="mono" style={{ fontSize: 13 }}>{d.stock - d.stockSold}/{d.stock}</div>

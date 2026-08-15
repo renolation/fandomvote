@@ -219,6 +219,7 @@ export interface ShopDeal {
   id: string;
   title: string;
   description: string | null;
+  imageUrl: string | null;
   partnerId: string | null;
   cost: number;
   currency: Currency;
@@ -539,6 +540,7 @@ export type DealCurrency = 'GOLD' | 'DIAMOND';
 export interface CreateDealBody {
   title: string;
   description?: string;
+  imageUrl?: string;
   partnerId?: string;
   cost: number;
   currency: DealCurrency;
@@ -549,6 +551,17 @@ export interface CreateDealBody {
 }
 
 export type UpdateDealBody = Partial<CreateDealBody>;
+
+// Thưởng xem rewarded ad. goldPerView do server tính = valueVnd × ratioBps (1 Gold = 1đ).
+export interface AdRewardConfig {
+  valueVnd: number;
+  ratioBps: number;
+  dailyCap: number;
+  cooldownSeconds: number;
+  goldPerView: number;
+}
+
+export type UpdateAdConfigBody = Partial<Omit<AdRewardConfig, 'goldPerView'>>;
 
 export interface UpdateProfileBody {
   avatarUrl?: string;

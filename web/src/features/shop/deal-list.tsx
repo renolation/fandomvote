@@ -33,7 +33,16 @@ export function DealList() {
         const c = colorForId(d.id);
         return (
           <div key={d.id} style={{ background: 'var(--c-white)', border: '3px solid var(--c-ink)', borderRadius: 14, boxShadow: '4px 4px 0 var(--c-ink)', overflow: 'hidden' }}>
-            <div style={{ height: 120, borderBottom: '3px solid var(--c-ink)', background: `repeating-linear-gradient(45deg, ${c}, ${c} 8px, #0a0a0a 8px, #0a0a0a 12px)` }} />
+            {/* Có ảnh → hiện ảnh; chưa có → ô sọc theo id như cũ. */}
+            {d.imageUrl ? (
+              <img
+                src={d.imageUrl}
+                alt={d.title}
+                style={{ display: 'block', width: '100%', height: 120, objectFit: 'cover', borderBottom: '3px solid var(--c-ink)' }}
+              />
+            ) : (
+              <div style={{ height: 120, borderBottom: '3px solid var(--c-ink)', background: `repeating-linear-gradient(45deg, ${c}, ${c} 8px, #0a0a0a 8px, #0a0a0a 12px)` }} />
+            )}
             <div style={{ padding: 15 }}>
               <div className="spread" style={{ alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>{d.title}</div>

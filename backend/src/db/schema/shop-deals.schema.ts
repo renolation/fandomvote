@@ -8,6 +8,7 @@ export const shopDeals = pgTable('shop_deals', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
   description: text('description'),
+  imageUrl: text('image_url'), // ảnh quà (R2). NULL → client vẽ ô màu theo id.
   partnerId: uuid('partner_id').references(() => partners.id),
   cost: bigint('cost', { mode: 'number' }).notNull(),
   currency: currencyEnum('currency').notNull(), // chỉ GOLD | DIAMOND hợp lệ

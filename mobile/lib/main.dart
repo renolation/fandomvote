@@ -1,13 +1,12 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/theme.dart';
 import 'router.dart';
 
+// AdMob init KHÔNG đặt ở đây: nó là async, gọi kiểu fire-and-forget sẽ khiến request ads
+// chạy trước khi SDK sẵn sàng. Việc init do adsInitProvider quản lý và widget ads await nó.
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  if (!kIsWeb) MobileAds.instance.initialize(); // AdMob (rewarded ad) — web không hỗ trợ
   runApp(const ProviderScope(child: FdvApp()));
 }
 

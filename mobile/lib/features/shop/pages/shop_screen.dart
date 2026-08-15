@@ -6,6 +6,7 @@ import '../../../core/providers.dart';
 import '../../../core/theme.dart';
 import '../../../shared/neu.dart';
 import '../../../shared/state_views.dart';
+import '../../../shared/widgets.dart';
 import '../../common_providers.dart';
 import '../controllers/shop_providers.dart';
 import '../widgets/reward_ad_card.dart';
@@ -21,6 +22,7 @@ class ShopScreen extends ConsumerWidget {
         ref.invalidate(dailyStatusProvider);
         ref.invalidate(iapProvider);
         ref.invalidate(dealsProvider);
+        ref.invalidate(adStatusProvider);
       },
       child: ListView(padding: const EdgeInsets.all(14), children: const [
         _EventBanner(),
@@ -144,7 +146,9 @@ class _IapGrid extends ConsumerWidget {
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.6,
+        // 1.6 làm ô thấp hơn nội dung ~1px → RenderFlex overflow. 1.45 để dư chỗ,
+        // chịu được cả khi user phóng to cỡ chữ hệ thống.
+        childAspectRatio: 1.45,
         children: [
           for (final p in iap)
             NeuCard(Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -183,6 +187,9 @@ class _DealsList extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: NeuCard(Row(children: [
+            // Ảnh quà; chưa có ảnh → ô màu theo id (dùng chung avatarBox).
+            avatarBox(d.id, d.imageUrl, size: 48),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(d.title, style: headFont(size: 15)),

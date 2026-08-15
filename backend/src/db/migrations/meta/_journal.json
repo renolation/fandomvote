@@ -43,6 +43,13 @@
       "when": 1782400000000,
       "tag": "0005_checkin_streak",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782400001000,
+      "tag": "0006_deal_image",
+      "breakpoints": true
     }
   ]
 }

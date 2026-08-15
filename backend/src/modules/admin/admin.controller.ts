@@ -10,6 +10,8 @@ import { IdolService } from '../idol/idol.service';
 import { UserService } from '../user/user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { VoteService } from '../vote/vote.service';
+import { AdRewardService } from '../shop/ad-reward.service';
+import { UpdateAdConfigDto } from '../shop/dto/ad-config.dto';
 import { GiftWalletService } from '../shop/gift-wallet.service';
 import { ShopService } from '../shop/shop.service';
 import { CreateDealDto, UpdateDealDto } from '../shop/dto/deal.dto';
@@ -32,7 +34,22 @@ export class AdminController {
     private readonly shop: ShopService,
     private readonly reconcile: ReconcileService,
     private readonly adminDelete: AdminDeleteService,
+    private readonly adReward: AdRewardService,
   ) {}
+
+  // ===== Thưởng xem quảng cáo (rewarded ad) =====
+
+  @Get('ads/config')
+  @ApiOperation({ summary: 'Cấu hình thưởng xem quảng cáo (giá 1 lượt, tỉ lệ trả về, trần/ngày)' })
+  adConfig() {
+    return this.adReward.settings();
+  }
+
+  @Post('ads/config')
+  @ApiOperation({ summary: 'Sửa cấu hình thưởng xem quảng cáo' })
+  updateAdConfig(@CurrentUser() admin: AuthUser, @Body() dto: UpdateAdConfigDto) {
+    return this.adReward.updateSettings(admin.id, dto);
+  }
 
   @Get('users')
   @ApiOperation({ summary: 'Liệt kê user (search + lọc flagged, cursor)' })

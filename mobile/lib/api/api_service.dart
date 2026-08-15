@@ -115,6 +115,11 @@ class ApiService {
   }
 
   Future<void> claimDaily() => _c.post('/shop/daily-reward/claim');
+
+  // Xem quảng cáo nhận Gold. Server tính số Gold + kiểm trần/cooldown; idempotency-key chống double-credit.
+  Future<AdRewardStatus> adStatus() async => AdRewardStatus.fromJson(_map(await _c.get('/shop/ads/status')));
+  Future<AdRewardResult> claimAdReward() async =>
+      AdRewardResult.fromJson(_map(await _c.post('/shop/ads/reward', idempotencyKey: newIdempotencyKey())));
   Future<List<IapPackage>> iapPackages() async => _list(await _c.get('/shop/iap-packages')).map(IapPackage.fromJson).toList();
   Future<List<LiveOffer>> liveOffers() async => _list(await _c.get('/shop/offers/live')).map(LiveOffer.fromJson).toList();
   Future<List<GiftItem>> gifts() async => _list(await _c.get('/shop/gifts')).map(GiftItem.fromJson).toList();

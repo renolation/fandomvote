@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { ImageUpload } from '@/components/image-upload';
 import { NeuButton, NeuDialog, NeuField, NeuInput, NeuSelect, NeuTextarea } from '@/components/neu';
 import { useToast } from '@/components/toast';
+import { uploadFile } from '@/lib/upload-api';
 import type { CreateDealBody, DealCurrency, GiftItemType, ShopDeal } from '@/types/api';
 import { useCreateDeal, useUpdateDeal } from './use-admin';
 
@@ -28,8 +30,11 @@ export function DealEditDialog({
   const [stock, setStock] = useState(String(deal?.stock ?? 10));
   const [validityDays, setValidityDays] = useState(String(deal?.validityDays ?? ''));
   const [isActive, setIsActive] = useState(deal?.isActive ?? true);
+  // Ảnh mới đang chọn (chưa upload). Upload lúc bấm lưu, giống luồng đề cử idol.
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const pending = create.isPending || update.isPending;
+  const pending = create.isPending || update.isPending || uploading;
 
   const submit = async () => {
     const parsedCost = parseInt(cost, 10);
@@ -38,10 +43,24 @@ export function DealEditDialog({
     if (!Number.isFinite(parsedCost) || parsedCost < 1) return toast.error('Giá phải ≥ 1');
     if (!Number.isFinite(parsedStock) || parsedStock < 0) return toast.error('Kho phải ≥ 0');
 
+    // Upload ảnh CHỈ khi bấm lưu (không upload lúc chọn file). Không chọn ảnh mới → giữ ảnh cũ.
+    let imageUrl = deal?.imageUrl ?? undefined;
+    if (imageFile) {
+      setUploading(true);
+      try {
+        imageUrl = (await uploadFile(imageFile)).url;
+      } catch (e) {
+        return toast.error(e);
+      } finally {
+        setUploading(false);
+      }
+    }
+
     const days = parseInt(validityDays, 10);
     const body: CreateDealBody = {
       title: title.trim(),
       description: description.trim() || undefined,
+      imageUrl,
       cost: parsedCost,
       currency,
       itemType,
@@ -81,6 +100,28 @@ export function DealEditDialog({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="VD: Voucher Highlands 50k"
         />
+      </NeuField>
+      <NeuField label="Ảnh quà">
+        <div className="col" style={{ gap: 10 }}>
+          {/* Đang sửa mà chưa chọn ảnh mới → cho xem ảnh hiện tại để biết có thay hay không. */}
+          {deal?.imageUrl && !imageFile && (
+            <div className="row" style={{ gap: 10, alignItems: 'center' }}>
+              <img
+                src={deal.imageUrl}
+                alt={deal.title}
+                style={{
+                  width: 64,
+                  height: 64,
+                  objectFit: 'cover',
+                  border: '2px solid var(--c-ink)',
+                  borderRadius: 8,
+                }}
+              />
+              <small className="muted" style={{ fontSize: 11 }}>Ảnh hiện tại — chọn ảnh mới để thay.</small>
+            </div>
+          )}
+          <ImageUpload file={imageFile} onChange={setImageFile} disabled={pending} />
+        </div>
       </NeuField>
       <NeuField label="Mô tả">
         <NeuTextarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
