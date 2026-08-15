@@ -12,4 +12,9 @@ class Env {
 
   // Chu kỳ poll leaderboard/balance/notification (§1).
   static const Duration pollInterval = Duration(seconds: 8);
+
+  // Trang pháp lý (mở bằng trình duyệt ngoài). Store yêu cầu truy cập được NGAY TRONG app.
+  static const String privacyPolicyUrl = 'https://fandomvote.com/privacy-policy';
+  static const String termsUrl = 'https://fandomvote.com/terms';
+  static const String supportEmail = 'support@fdv.vn';
 }

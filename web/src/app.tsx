@@ -6,6 +6,8 @@ import { AppLayout } from '@/components/app-layout';
 import { RequireAdmin, RequireAuth } from '@/components/route-guards';
 import { LoginPage } from '@/features/auth/login-page';
 import { RegisterPage } from '@/features/auth/register-page';
+import { PrivacyPolicyPage } from '@/routes/(public)/privacy-policy-page';
+import { TermsPage } from '@/routes/(public)/terms-page';
 import { VotePage } from '@/routes/(user)/vote-page';
 import { CampaignDetailPage } from '@/routes/(user)/campaign-detail-page';
 import { ShopPage } from '@/routes/(user)/shop-page';
@@ -37,6 +39,9 @@ export function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      {/* Công khai, không cần đăng nhập — link nộp cho Google Play / App Store. */}
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
 
       {/* User shell — xem tự do (chưa auth vẫn vào được home/campaign/shop) */}
       <Route element={<AppLayout />}>
