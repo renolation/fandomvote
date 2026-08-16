@@ -553,15 +553,28 @@ export interface CreateDealBody {
 export type UpdateDealBody = Partial<CreateDealBody>;
 
 // Thưởng xem rewarded ad. goldPerView do server tính = valueVnd × ratioBps (1 Gold = 1đ).
+export interface AdFormatFlags {
+  rewarded: boolean;
+  rewardedInterstitial: boolean;
+  interstitial: boolean;
+  banner: boolean;
+  appOpen: boolean;
+  native: boolean;
+}
+
 export interface AdRewardConfig {
   valueVnd: number;
   ratioBps: number;
   dailyCap: number;
   cooldownSeconds: number;
+  rewardedInterstitialGapSeconds: number;
   goldPerView: number;
+  formats: AdFormatFlags;
 }
 
-export type UpdateAdConfigBody = Partial<Omit<AdRewardConfig, 'goldPerView'>>;
+export type UpdateAdConfigBody = Partial<Omit<AdRewardConfig, 'goldPerView' | 'formats'>> & {
+  formats?: Partial<AdFormatFlags>;
+};
 
 export interface UpdateProfileBody {
   avatarUrl?: string;

@@ -6,6 +6,7 @@ import '../../../core/theme.dart';
 import '../../../shared/neu.dart';
 import '../../../shared/state_views.dart';
 import '../../../shared/widgets.dart';
+import '../../shop/controllers/rewarded_interstitial_controller.dart';
 import '../widgets/add_idol_sheet.dart';
 import '../controllers/campaign_rules.dart';
 import 'results_list_screen.dart';
@@ -160,7 +161,13 @@ class _Board extends ConsumerWidget {
                   ),
                   // isVotable: OPEN và đã tới open_at — campaign hẹn giờ chưa mở thì không có nút VOTE.
                   if (campaign.isVotable)
-                    NeuButton('VOTE', color: Neu.yellow, onPressed: () => openVoteSheet(context, ref, campaign, entries[i])),
+                    NeuButton('VOTE', color: Neu.yellow, onPressed: () async {
+                      final voted = await openVoteSheet(context, ref, campaign, entries[i]);
+                      // Vote xong mới mời xem rewarded interstitial (điều kiện + giãn cách do server đặt).
+                      if (voted == true && context.mounted) {
+                        await ref.read(rewardedInterstitialProvider).maybeOfferAfterVote(context);
+                      }
+                    }),
                 ])),
               ),
           ],

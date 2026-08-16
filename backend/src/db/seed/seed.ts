@@ -39,8 +39,16 @@ const CONFIGS: Array<{ key: string; value: unknown; description: string }> = [
   // Thưởng xem rewarded ad (AdMob). value_vnd tạm cố định; sau này lấy từ eCPM ngày trước qua AdMob API.
   { key: 'ads.reward_value_vnd', value: 200, description: 'Giá 1 lượt xem rewarded ad (VND)' },
   { key: 'ads.reward_ratio_bps', value: 10000, description: 'Tỉ lệ Gold trả về user (bps, 10000 = 100%)' },
-  { key: 'ads.daily_view_cap', value: 10, description: 'Trần lượt xem được thưởng mỗi ngày (UTC+7)' },
-  { key: 'ads.cooldown_seconds', value: 30, description: 'Giãn cách tối thiểu giữa 2 lượt xem (giây)' },
+  { key: 'ads.daily_view_cap', value: 100, description: 'Trần lượt xem được thưởng mỗi ngày (UTC+7). 0 = không giới hạn' },
+  { key: 'ads.cooldown_seconds', value: 10, description: 'Giãn cách tối thiểu giữa 2 lượt xem (giây)' },
+  { key: 'ads.rewarded_interstitial_gap_seconds', value: 300, description: 'Giãn cách tối thiểu giữa 2 lần mời xem rewarded interstitial (giây)' },
+  // Bật/tắt từng loại quảng cáo (admin đổi được, client đọc từ server → không cần update app).
+  { key: 'ads.enabled.rewarded', value: true, description: 'Bật quảng cáo loại rewarded' },
+  { key: 'ads.enabled.rewarded_interstitial', value: false, description: 'Bật quảng cáo loại rewardedInterstitial' },
+  { key: 'ads.enabled.interstitial', value: false, description: 'Bật quảng cáo loại interstitial' },
+  { key: 'ads.enabled.banner', value: false, description: 'Bật quảng cáo loại banner' },
+  { key: 'ads.enabled.app_open', value: false, description: 'Bật quảng cáo loại appOpen' },
+  { key: 'ads.enabled.native', value: false, description: 'Bật quảng cáo loại native' },
   {
     key: 'ads.ssv_enabled',
     value: false,

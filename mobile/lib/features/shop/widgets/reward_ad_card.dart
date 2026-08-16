@@ -34,7 +34,19 @@ class _RewardAdCardState extends ConsumerState<RewardAdCard> {
   @override
   void initState() {
     super.initState();
-    if (!kIsWeb) _load();
+    if (!kIsWeb && AdConfig.rewardedHasUnit) _waitEnabledThenLoad();
+  }
+
+  // Admin (web) bật/tắt rewarded qua platform_config → app hỏi server trước khi nạp.
+  // Không lấy được cấu hình (offline/backend lỗi) → không nạp: đằng nào cũng không cộng Gold được.
+  Future<void> _waitEnabledThenLoad() async {
+    try {
+      final status = await ref.read(adStatusProvider.future);
+      if (!status.formats.rewarded) return;
+    } catch (_) {
+      return;
+    }
+    if (mounted) _load();
   }
 
   @override
@@ -117,7 +129,13 @@ class _RewardAdCardState extends ConsumerState<RewardAdCard> {
       ref.invalidate(balanceProvider);
       ref.invalidate(adStatusProvider);
       if (mounted) {
-        showOk(context, '+${formatNumber(r.goldAwarded)} Gold · còn ${r.remainingToday} lượt hôm nay');
+        final left = r.remainingToday; // null = không giới hạn lượt/ngày
+        showOk(
+          context,
+          left == null
+              ? '+${formatNumber(r.goldAwarded)} Gold'
+              : '+${formatNumber(r.goldAwarded)} Gold · còn $left lượt hôm nay',
+        );
       }
     } catch (e) {
       if (mounted) showError(context, e);
@@ -158,9 +176,14 @@ class _RewardAdCardState extends ConsumerState<RewardAdCard> {
       ]));
     }
 
-    // Chỉ gọi API hạn mức khi thực sự cộng Gold (cờ là const → dependency không đổi lúc chạy).
-    final status = AdConfig.creditGoldAfterView ? ref.watch(adStatusProvider).valueOrNull : null;
-    final capReached = status != null && status.remainingToday <= 0;
+    final status = ref.watch(adStatusProvider).valueOrNull;
+    // Ẩn hẳn khi: chưa khai báo ad unit cho nền tảng này (vd iOS chưa tạo), chưa lấy được
+    // cấu hình, hoặc admin đã TẮT rewarded trên web.
+    if (!AdConfig.rewardedHasUnit || status == null || !status.formats.rewarded) {
+      return const SizedBox.shrink();
+    }
+    // remainingToday null = server không đặt trần → không bao giờ khoá nút.
+    final capReached = status.remainingToday != null && status.remainingToday! <= 0;
     final ready = _ad != null;
     final busy = _loading || _claiming;
 
@@ -183,20 +206,19 @@ class _RewardAdCardState extends ConsumerState<RewardAdCard> {
           child: Text(AdConfig.creditGoldAfterView ? '🎬 Xem quảng cáo nhận Gold' : '🎬 Xem quảng cáo',
               style: headFont(size: 16)),
         ),
-        if (status != null)
+        // Chỉ hiện hạn mức khi server thực sự đặt trần.
+        if (status.remainingToday != null)
           Text('${status.remainingToday}/${status.dailyCap} lượt',
               style: monoFont(size: 12, color: Colors.grey.shade700)),
-        if (status == null && _watched > 0)
+        if (status.remainingToday == null && _watched > 0)
           Text('đã xem $_watched', style: monoFont(size: 12, color: Colors.grey.shade700)),
       ]),
       const SizedBox(height: 6),
       Text(
-        // Mức Gold lấy từ server; chưa tải được status thì nói chung chung, không bịa số.
-        status != null
+        // Mức Gold do server tính — client không bịa số.
+        AdConfig.creditGoldAfterView
             ? 'Xem xong 1 video nhận ${formatNumber(status.goldPerView)} Gold.'
-            : AdConfig.creditGoldAfterView
-                ? 'Xem hết 1 video quảng cáo để nhận Gold.'
-                : 'Xem hết 1 video quảng cáo. (Đang chạy quảng cáo thử — chưa cộng Gold.)',
+            : 'Xem hết 1 video quảng cáo. (Đang chạy quảng cáo thử — chưa cộng Gold.)',
         style: TextStyle(color: Colors.grey.shade600),
       ),
       if (_error != null) ...[

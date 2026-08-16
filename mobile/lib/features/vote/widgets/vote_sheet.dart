@@ -10,8 +10,9 @@ import '../../common_providers.dart';
 import '../controllers/vote_providers.dart';
 
 // Bottom sheet nhập số sao vote. Response từ backend (Green trừ trước → Gold) — client KHÔNG tự trừ.
-Future<void> openVoteSheet(BuildContext context, WidgetRef ref, Campaign campaign, LeaderboardEntry entry) {
-  return showModalBottomSheet(
+// Trả true khi vote thành công → caller có thể mời xem rewarded interstitial.
+Future<bool?> openVoteSheet(BuildContext context, WidgetRef ref, Campaign campaign, LeaderboardEntry entry) {
+  return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -55,7 +56,7 @@ class _VoteSheetState extends ConsumerState<_VoteSheet> {
       ref.invalidate(balanceProvider);
       ref.invalidate(leaderboardProvider(widget.campaign.id));
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context, true);
         showOk(context, 'Đã vote ${formatNumber(n)} ⭐ · Green −${res.greenSpent}, Gold −${res.goldSpent}');
       }
     } catch (e) {

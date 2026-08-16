@@ -51,6 +51,34 @@ class DailyStatus {
   const DailyStatus({required this.claimedToday, required this.dayIndex});
 }
 
+// Bật/tắt từng loại quảng cáo — do admin đặt trên web, app đọc theo (không cần update app).
+class AdFormatFlags {
+  final bool rewarded;
+  final bool rewardedInterstitial;
+  final bool interstitial;
+  final bool banner;
+  final bool appOpen;
+  final bool native;
+
+  const AdFormatFlags({
+    this.rewarded = false,
+    this.rewardedInterstitial = false,
+    this.interstitial = false,
+    this.banner = false,
+    this.appOpen = false,
+    this.native = false,
+  });
+
+  factory AdFormatFlags.fromJson(Map<String, dynamic> j) => AdFormatFlags(
+        rewarded: asBool(j['rewarded']),
+        rewardedInterstitial: asBool(j['rewardedInterstitial']),
+        interstitial: asBool(j['interstitial']),
+        banner: asBool(j['banner']),
+        appOpen: asBool(j['appOpen']),
+        native: asBool(j['native']),
+      );
+}
+
 // Xem rewarded ad nhận Gold. Số Gold do SERVER tính (giá 1 lượt × tỉ lệ admin đặt) — client chỉ hiển thị.
 class AdRewardStatus {
   final int goldPerView;
@@ -58,9 +86,11 @@ class AdRewardStatus {
   final int ratioBps; // tỉ lệ trả về user: 10000 = 100%
   final int dailyCap;
   final int cooldownSeconds;
+  final int rewardedInterstitialGapSeconds; // giãn cách giữa 2 lần mời sau khi vote
   final int viewsToday;
-  final int remainingToday;
+  final int? remainingToday; // null = không giới hạn lượt/ngày
   final String? nextAvailableAt; // còn cooldown → thời điểm được xem tiếp
+  final AdFormatFlags formats;
 
   const AdRewardStatus({
     required this.goldPerView,
@@ -68,9 +98,11 @@ class AdRewardStatus {
     required this.ratioBps,
     required this.dailyCap,
     required this.cooldownSeconds,
+    this.rewardedInterstitialGapSeconds = 300,
     required this.viewsToday,
-    required this.remainingToday,
+    this.remainingToday,
     this.nextAvailableAt,
+    this.formats = const AdFormatFlags(),
   });
 
   factory AdRewardStatus.fromJson(Map<String, dynamic> j) => AdRewardStatus(
@@ -79,20 +111,24 @@ class AdRewardStatus {
         ratioBps: asInt(j['ratioBps']),
         dailyCap: asInt(j['dailyCap']),
         cooldownSeconds: asInt(j['cooldownSeconds']),
+        rewardedInterstitialGapSeconds: asInt(j['rewardedInterstitialGapSeconds'], 300),
         viewsToday: asInt(j['viewsToday']),
-        remainingToday: asInt(j['remainingToday']),
+        remainingToday: asIntOrNull(j['remainingToday']),
         nextAvailableAt: asStrOrNull(j['nextAvailableAt']),
+        formats: AdFormatFlags.fromJson(
+          (j['formats'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{},
+        ),
       );
 }
 
 // Kết quả sau khi xem xong 1 lượt (server đã ghi ledger).
 class AdRewardResult {
   final int goldAwarded;
-  final int remainingToday;
+  final int? remainingToday; // null = không giới hạn
   const AdRewardResult(this.goldAwarded, this.remainingToday);
 
   factory AdRewardResult.fromJson(Map<String, dynamic> j) =>
-      AdRewardResult(asInt(j['goldAwarded']), asInt(j['remainingToday']));
+      AdRewardResult(asInt(j['goldAwarded']), asIntOrNull(j['remainingToday']));
 }
 
 class IapPackage {

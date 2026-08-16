@@ -3,6 +3,8 @@ int asInt(dynamic v, [int d = 0]) => v is num ? v.toInt() : int.tryParse('$v') ?
 double asDouble(dynamic v, [double d = 0]) => v is num ? v.toDouble() : double.tryParse('$v') ?? d;
 String asString(dynamic v, [String d = '']) => v == null ? d : v.toString();
 String? asStrOrNull(dynamic v) => v?.toString();
+// null giữ nguyên null (khác asInt trả 0) — dùng cho giá trị "không giới hạn".
+int? asIntOrNull(dynamic v) => v == null ? null : asInt(v);
 bool asBool(dynamic v, [bool d = false]) => v is bool ? v : (v == 'true' ? true : (v == 'false' ? false : d));
 List<Map<String, dynamic>> asMapList(dynamic v) =>
     (v is List) ? v.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList() : const [];
