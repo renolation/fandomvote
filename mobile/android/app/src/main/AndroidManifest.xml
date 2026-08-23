@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Bản debug/profile được Flutter tự thêm INTERNET, bản RELEASE thì KHÔNG.
+         Thiếu dòng này thì app release không gọi được API lẫn quảng cáo. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- AdMob khuyến nghị: đọc trạng thái mạng để chọn thời điểm nạp quảng cáo. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
     <application
         android:label="fdv_mobile"
         android:name="${applicationName}"
