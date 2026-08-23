@@ -50,6 +50,11 @@ android {
 
     buildTypes {
         release {
+            // R8 bật mặc định cho release. Giữ nguyên (giảm size), nhưng PHẢI có keep rule
+            // cho Room/WorkManager, nếu không app crash lúc khởi động — xem proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Có key.properties (đã điền) → ký bằng key thật; chưa có → tạm dùng debug key
             // để `flutter run --release` vẫn chạy được (bản này KHÔNG dùng để phát hành).
             signingConfig = if (hasReleaseKeystore) {
