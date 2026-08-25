@@ -8,8 +8,7 @@ class Env {
   //   Android emulator:      'http://10.0.2.2:8001/api/v1'   (emulator không thấy localhost của máy)
 
   // Google OAuth client id — dán client id vào để bật nút đăng nhập Google (để trống → ẩn nút).
-  static const String googleClientId = '';
-
+  static const String googleClientId = '308843597427-6e7jdjdb6j3t4s05sb7fnct7ibb1nqms.apps.googleusercontent.com';
   // Chu kỳ poll leaderboard/balance/notification (§1).
   static const Duration pollInterval = Duration(seconds: 8);
 
